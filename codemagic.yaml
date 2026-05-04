@@ -29,9 +29,12 @@ workflows:
         script: |
           npx expo prebuild --platform ios --clean --no-install
           echo "=== Patching Podfile: force IPHONEOS_DEPLOYMENT_TARGET=15.1 on all pods ==="
-          python3 -c "
-          patch = '''
-          post_install do |installer|
+          python3 - << 'PYEOF'
+          import re, sys
+          podfile_path = 'ios/Podfile'
+          content = open(podfile_path).read()
+          inject = """
+            # Force iOS 15.1 deployment target on all pods (injected by CI)
             installer.pods_project.targets.each do |target|
               target.build_configurations.each do |config|
                 v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
@@ -40,12 +43,16 @@ workflows:
                 end
               end
             end
-          end
-          '''
-          open('ios/Podfile', 'a').write(patch)
-          "
-          echo "=== Podfile last 15 lines ==="
-          tail -15 ios/Podfile
+          """
+          if 'IPHONEOS_DEPLOYMENT_TARGET' in content:
+              print('Already patched, skipping.')
+          else:
+              patched = re.sub(r'(post_install do \|installer\|)', r'\1' + inject, content, count=1)
+              open(podfile_path, 'w').write(patched)
+              print('Podfile patched successfully.')
+          PYEOF
+          echo "=== Podfile last 20 lines ==="
+          tail -20 ios/Podfile
 
       - name: Install CocoaPods
         script: |
@@ -155,9 +162,12 @@ workflows:
       - name: Expo prebuild (generate ios/ folder)
         script: |
           npx expo prebuild --platform ios --clean --no-install
-          python3 -c "
-          patch = '''
-          post_install do |installer|
+          python3 - << 'PYEOF'
+          import re
+          podfile_path = 'ios/Podfile'
+          content = open(podfile_path).read()
+          inject = """
+            # Force iOS 15.1 deployment target on all pods (injected by CI)
             installer.pods_project.targets.each do |target|
               target.build_configurations.each do |config|
                 v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
@@ -166,10 +176,14 @@ workflows:
                 end
               end
             end
-          end
-          '''
-          open('ios/Podfile', 'a').write(patch)
-          "
+          """
+          if 'IPHONEOS_DEPLOYMENT_TARGET' in content:
+              print('Already patched, skipping.')
+          else:
+              patched = re.sub(r'(post_install do \|installer\|)', r'\1' + inject, content, count=1)
+              open(podfile_path, 'w').write(patched)
+              print('Podfile patched successfully.')
+          PYEOF
 
       - name: Install CocoaPods
         script: |
