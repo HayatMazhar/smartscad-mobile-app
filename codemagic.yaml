@@ -1,0 +1,121 @@
+workflows:
+  ios-uat:
+    name: iOS UAT (Ad Hoc)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      xcode: 16.2
+      node: 22.x
+      vars:
+        EXPO_PUBLIC_API_BASE_URL: "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
+        EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
+        BUNDLE_ID: "ae.adsmartsupport.smartscadmobile"
+      # These 3 must be added in Codemagic UI → Environment variables (encrypted):
+      #   CM_CERTIFICATE          — base64 of distribution.p12  (see codemagic-creds/distribution_p12_base64.txt)
+      #   CM_CERTIFICATE_PASSWORD — p12 password
+      #   CM_PROVISIONING_PROFILE — base64 of Ad Hoc .mobileprovision  (see codemagic-creds/adhoc_profile_base64.txt)
+
+    scripts:
+      - name: Set up code signing
+        script: |
+          # Decode and install the p12 certificate
+          echo $CM_CERTIFICATE | base64 --decode > /tmp/distribution.p12
+          keychain initialize
+          keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
+
+          # Decode and install the provisioning profile
+          echo $CM_PROVISIONING_PROFILE | base64 --decode > /tmp/adhoc.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp /tmp/adhoc.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Install Node dependencies
+        script: npm install
+
+      - name: Expo prebuild (generate ios/ folder)
+        script: npx expo prebuild --platform ios --clean --no-install
+
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Build iOS IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/Sanadkom.xcworkspace \
+            --scheme Sanadkom \
+            --config Release
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      email:
+        recipients:
+          - apps@scad.ae
+        notify:
+          success: true
+          failure: true
+
+  ios-appstore:
+    name: iOS App Store (Production)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      xcode: 16.2
+      node: 22.x
+      vars:
+        EXPO_PUBLIC_API_BASE_URL: "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
+        EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
+        BUNDLE_ID: "ae.adsmartsupport.smartscadmobile"
+      # CM_CERTIFICATE, CM_CERTIFICATE_PASSWORD, CM_PROVISIONING_PROFILE_APPSTORE must be set in UI
+
+    scripts:
+      - name: Set up code signing
+        script: |
+          echo $CM_CERTIFICATE | base64 --decode > /tmp/distribution.p12
+          keychain initialize
+          keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
+          echo $CM_PROVISIONING_PROFILE_APPSTORE | base64 --decode > /tmp/appstore.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp /tmp/appstore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Install Node dependencies
+        script: npm install
+
+      - name: Expo prebuild
+        script: npx expo prebuild --platform ios --clean --no-install
+
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Build iOS IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/Sanadkom.xcworkspace \
+            --scheme Sanadkom \
+            --config Release
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+      email:
+        recipients:
+          - apps@scad.ae
+        notify:
+          success: true
+          failure: true

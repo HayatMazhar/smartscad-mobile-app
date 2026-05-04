@@ -16,4 +16,5 @@ ios/build/
 .env
 .env.*
 .tools/
+codemagic-creds/
 
