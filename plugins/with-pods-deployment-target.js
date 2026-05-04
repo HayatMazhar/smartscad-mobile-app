@@ -1,23 +1,25 @@
 /**
  * Expo config plugin: force IPHONEOS_DEPLOYMENT_TARGET = 15.1 on ALL pod targets.
  *
- * Why: expo-build-properties sets the deployment target on the main app target,
- * but Pods targets (ExpoModulesCore, etc.) may retain a lower minimum which causes
- * Swift compiler errors like "unknown attribute 'MainActor'" on Xcode 16.
+ * expo-build-properties sets the main app target but Pod targets (ExpoModulesCore etc.)
+ * may retain a lower minimum, causing Swift @MainActor errors on Xcode 16.
+ *
+ * Strategy: always inject into the EXISTING post_install block that expo-build-properties
+ * creates. Never append a second post_install (CocoaPods forbids it).
  */
 const { withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
+const MARKER = '# CI_DEPLOYMENT_TARGET_PATCH';
 const MIN_IOS = '15.1';
 
-const POST_INSTALL = `
-  # injected by plugins/with-pods-deployment-target.js
+const INJECT = `
+  ${MARKER}
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < ${MIN_IOS}.to_f
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '${MIN_IOS}'
-      end
+      v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '${MIN_IOS}' if v.nil? || v.to_f < ${MIN_IOS}
     end
   end
 `;
@@ -29,17 +31,25 @@ module.exports = function withPodsDeploymentTarget(config) {
       const podfilePath = path.join(cfg.modRequest.platformProjectRoot, 'Podfile');
       if (!fs.existsSync(podfilePath)) return cfg;
       let podfile = fs.readFileSync(podfilePath, 'utf8');
-      if (podfile.includes('with-pods-deployment-target')) return cfg;
-      // Inject into existing post_install block, or append one
+
+      // Already patched - skip
+      if (podfile.includes(MARKER)) return cfg;
+
+      // Inject right after the opening of the existing post_install block
       if (/post_install do \|installer\|/.test(podfile)) {
         podfile = podfile.replace(
           /post_install do \|installer\|/,
-          `post_install do |installer|${POST_INSTALL}`
+          `post_install do |installer|${INJECT}`
         );
+        fs.writeFileSync(podfilePath, podfile);
+        console.log('[with-pods-deployment-target] Patched existing post_install block.');
       } else {
-        podfile += `\npost_install do |installer|${POST_INSTALL}\nend\n`;
+        // No post_install at all - safe to append one
+        podfile += `\npost_install do |installer|${INJECT}\nend\n`;
+        fs.writeFileSync(podfilePath, podfile);
+        console.log('[with-pods-deployment-target] Appended new post_install block.');
       }
-      fs.writeFileSync(podfilePath, podfile);
+
       return cfg;
     },
   ]);

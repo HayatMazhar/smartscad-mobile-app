@@ -28,42 +28,8 @@ workflows:
       - name: Expo prebuild (generate ios/ folder)
         script: |
           npx expo prebuild --platform ios --clean --no-install
-          echo "=== Patching Podfile: inject deployment target fix into post_install ==="
-          python3 - << 'PYEOF'
-          import re
-          MARKER = '# CI_DEPLOYMENT_TARGET_PATCH'
-          podfile_path = 'ios/Podfile'
-          content = open(podfile_path).read()
-          if MARKER in content:
-              print('Already patched, skipping.')
-          else:
-              inject = (
-                  "\n  " + MARKER + "\n"
-                  "  installer.pods_project.targets.each do |target|\n"
-                  "    target.build_configurations.each do |config|\n"
-                  "      v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']\n"
-                  "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1' if v.nil? || v.to_f < 15.1\n"
-                  "    end\n"
-                  "  end\n"
-              )
-              patched = re.sub(
-                  r'(post_install do \|installer\|)',
-                  r'\1' + inject,
-                  content,
-                  count=1
-              )
-              if patched == content:
-                  print('WARNING: post_install block not found, appending new block')
-                  patched += (
-                      "\npost_install do |installer|\n"
-                      + inject
-                      + "end\n"
-                  )
-              open(podfile_path, 'w').write(patched)
-              print('Podfile patched successfully.')
-          PYEOF
-          echo "=== Podfile (full) ==="
-          cat ios/Podfile
+          echo "=== Podfile post_install section ==="
+          grep -A 20 "post_install" ios/Podfile || true
 
       - name: Install CocoaPods
         script: |
@@ -173,29 +139,7 @@ workflows:
       - name: Expo prebuild (generate ios/ folder)
         script: |
           npx expo prebuild --platform ios --clean --no-install
-          python3 - << 'PYEOF'
-          import re
-          MARKER = '# CI_DEPLOYMENT_TARGET_PATCH'
-          podfile_path = 'ios/Podfile'
-          content = open(podfile_path).read()
-          if MARKER in content:
-              print('Already patched, skipping.')
-          else:
-              inject = (
-                  "\n  " + MARKER + "\n"
-                  "  installer.pods_project.targets.each do |target|\n"
-                  "    target.build_configurations.each do |config|\n"
-                  "      v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']\n"
-                  "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1' if v.nil? || v.to_f < 15.1\n"
-                  "    end\n"
-                  "  end\n"
-              )
-              patched = re.sub(r'(post_install do \|installer\|)', r'\1' + inject, content, count=1)
-              if patched == content:
-                  patched += "\npost_install do |installer|\n" + inject + "end\n"
-              open(podfile_path, 'w').write(patched)
-              print('Podfile patched successfully.')
-          PYEOF
+          grep -A 20 "post_install" ios/Podfile || true
 
       - name: Install CocoaPods
         script: |
