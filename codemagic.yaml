@@ -50,13 +50,58 @@ workflows:
 
       - name: Build iOS IPA
         script: |
-          xcode-project use-profiles
-          xcode-project build-ipa \
-            --workspace ios/Sanadkom.xcworkspace \
-            --scheme Sanadkom \
-            --config Release \
-            --disable-xcpretty \
-            --log-stream stdout
+          # Decode App Store profile for archiving (no device restriction)
+          echo $CM_PROVISIONING_PROFILE_APPSTORE | base64 --decode > /tmp/appstore.mobileprovision
+          cp /tmp/appstore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          # Write export options plist — export as ad-hoc using the ad-hoc profile
+          cat > /tmp/ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>teamID</key>
+            <string>87KPX56NJY</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>ae.adsmartsupport.smartscadmobile</key>
+              <string>*[expo] ae.adsmartsupport.smartscadmobile AdHoc 1777892514262</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+          # Archive using App Store profile (no device check), then export as ad-hoc
+          xcodebuild \
+            -workspace ios/Sanadkom.xcworkspace \
+            -scheme Sanadkom \
+            -config Release \
+            -archivePath /tmp/Sanadkom.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=87KPX56NJY \
+            PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            archive | xcpretty || true
+
+          # Check archive was created
+          if [ ! -d "/tmp/Sanadkom.xcarchive" ]; then
+            echo "Archive failed"
+            exit 1
+          fi
+
+          # Export IPA as ad-hoc
+          xcodebuild \
+            -exportArchive \
+            -archivePath /tmp/Sanadkom.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist /tmp/ExportOptions.plist
+
+          ls -la build/ios/ipa/
 
     artifacts:
       - build/ios/ipa/*.ipa
