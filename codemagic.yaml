@@ -86,7 +86,8 @@ workflows:
             DEVELOPMENT_TEAM=87KPX56NJY \
             PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
-            archive | xcpretty || true
+            IPHONEOS_DEPLOYMENT_TARGET=15.1 \
+            archive 2>&1 | tail -50 || true
 
           # Check archive was created
           if [ ! -d "/tmp/Sanadkom.xcarchive" ]; then
