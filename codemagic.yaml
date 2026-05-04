@@ -5,7 +5,11 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      xcode: 16.2
+      # Xcode 26.4 is the current Codemagic default (Swift 6.2+).
+      # Required because expo-modules-core 55.x uses isolated-conformance
+      # syntax (`extension UIView: @MainActor AnyArgument`, SE-0470) which
+      # only landed in Swift 6.2. Xcode 16.2 (Swift 6.0) cannot compile it.
+      xcode: 26.4
       node: 22.14.0
       groups:
         - ios_signing
@@ -165,7 +169,8 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      xcode: 16.2
+      # See ios-uat for why we need Xcode 26.x (Swift 6.2+) for expo SDK 55.
+      xcode: 26.4
       node: 22.14.0
       groups:
         - ios_signing
