@@ -1,0 +1,75 @@
+# EAS Build upload exclusions for the SmartSCAD Mobile App.
+# IMPORTANT: This file is only fully effective when running EAS with
+# EAS_NO_VCS=1 — that tells EAS to use the App folder as the upload root
+# and skip the 24 GB parent git repo entirely.
+
+# --- node_modules (~2.3 GB — the #1 cause of upload failures) -------------
+node_modules
+node_modules/
+node_modules/**
+**/node_modules
+**/node_modules/**
+
+# --- Android build artifacts (~700 MB, irrelevant for iOS builds) ---------
+android/app/build
+android/app/build/**
+android/app/.cxx
+android/app/.cxx/**
+android/.gradle
+android/.gradle/**
+android/.kotlin
+android/.kotlin/**
+android/build
+android/build/**
+
+# --- iOS build artifacts (Pods reinstalled fresh on EAS) ------------------
+ios/Pods
+ios/Pods/**
+ios/build
+ios/build/**
+ios/DerivedData
+ios/DerivedData/**
+ios/.xcode.env.local
+
+# --- Expo / dist artifacts ------------------------------------------------
+.expo
+.expo/**
+.expo-shared
+.expo-shared/**
+dist
+dist/**
+web-build
+web-build/**
+
+# --- Local tooling (~248 MB) ----------------------------------------------
+.tools
+.tools/**
+
+# --- Secrets (NEVER upload to EAS servers) --------------------------------
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.env
+.env.*
+google-services.json
+GoogleService-Info.plist
+
+# --- Logs / scratch / IDE -------------------------------------------------
+*.log
+*.orig.*
+npm-debug.*
+_apk_build_log.txt
+_build_apk*.log
+build_log.txt
+.idea
+.idea/**
+.vscode
+.vscode/**
+.DS_Store
+
+# --- Docs the build doesn't need ------------------------------------------
+HANDOFF_*.md
+MOBILE_SCREENS_INVENTORY.md
+REFACTORING_ANALYSIS.md

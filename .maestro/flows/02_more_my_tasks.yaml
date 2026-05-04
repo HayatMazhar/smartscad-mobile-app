@@ -1,0 +1,16 @@
+# Flow 2 — Task hub via More → My Tasks / Action Items.
+appId: com.mazhar1785.smartscadmobile
+---
+- runFlow: ../subflows/login_dev.yaml
+- tapOn:
+    id: 'tab_bar_more'
+- extendedWaitUntil:
+    visible:
+      id: 'more.menu.tasks'
+    timeout: 45000
+- tapOn:
+    id: 'more.menu.tasks'
+- extendedWaitUntil:
+    visible:
+      id: 'screen.task_list'
+    timeout: 60000

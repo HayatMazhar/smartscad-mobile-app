@@ -1,0 +1,38 @@
+diff --git a/node_modules/expo/src/Expo.fx.tsx b/node_modules/expo/src/Expo.fx.tsx
+index 9833fc8..febc77f 100644
+--- a/node_modules/expo/src/Expo.fx.tsx
++++ b/node_modules/expo/src/Expo.fx.tsx
+@@ -10,11 +10,12 @@ import { isRunningInExpoGo } from './environment/ExpoGo';
+ import { AppEntryNotFound } from './errors/AppEntryNotFound';
+ import { createErrorHandler } from './errors/ExpoErrorManager';
+ 
+-// Only during development.
++// Web-only: uses `window.location` and dev WebSocket. `globalThis.expo` is also set in
++// Expo Go on iOS/Android — do not load this on native (Hermes "require" / runtime order issues).
+ if (
+   __DEV__ &&
+-  // Disable for SSR
+-  typeof globalThis.expo !== 'undefined'
++  typeof globalThis.expo !== 'undefined' &&
++  process.env.EXPO_OS === 'web'
+ ) {
+   require('./async-require/messageSocket');
+ }
+diff --git a/node_modules/expo/src/async-require/setup.ts b/node_modules/expo/src/async-require/setup.ts
+index e530acf..349e13c 100644
+--- a/node_modules/expo/src/async-require/setup.ts
++++ b/node_modules/expo/src/async-require/setup.ts
+@@ -1,8 +1,10 @@
+-// Only during development.
++// Only during development, and only on web. These modules use `location`, document,
++// and HMRClient.setup({ isEnabled }) — not the native HMR signature (platform, host, …).
++// RN / Hermes may define `window` as a polyfill, so we must not rely on that alone.
+ if (
+   __DEV__ &&
+-  // Disable for SSR
+-  typeof window !== 'undefined'
++  typeof window !== 'undefined' &&
++  process.env.EXPO_OS === 'web'
+ ) {
+   require('./setupFastRefresh');
+   require('./setupHMR');

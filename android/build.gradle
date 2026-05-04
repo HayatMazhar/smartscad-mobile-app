@@ -1,0 +1,122 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+  ext {
+    // SDK toolchain — these used to come from `apply plugin: "expo-root-
+    // project"` (SDK 50/51) but that plugin was removed in SDK 52, so the
+    // app-level build.gradle (which reads `rootProject.ext.ndkVersion` etc)
+    // would fail with "Cannot get property 'ndkVersion' on extra properties
+    // extension as it does not exist". Defining them here matches the
+    // standard SDK 52 / RN 0.76 template and lets `gradle.properties`
+    // overrides (`android.compileSdkVersion`, etc.) still take precedence.
+    buildToolsVersion = findProperty('android.buildToolsVersion') ?: '35.0.0'
+    minSdkVersion = Integer.parseInt(findProperty('android.minSdkVersion') ?: '24')
+    compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35')
+    targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '34')
+    ndkVersion = '27.1.12297006'
+
+    // Single source of truth for the Kotlin compiler used in *every*
+    // subproject. Must match `android.kotlinVersion` in gradle.properties
+    // (which only steers Expo's autolinking). Keeping these aligned avoids
+    // the "metadata version 2.1.0 vs compiler 1.9.0" failure on
+    // :expo-modules-core:compileReleaseKotlin.
+    kotlinVersion = '2.0.21'
+  }
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle:8.6.1')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+  }
+  configurations.classpath {
+    resolutionStrategy.eachDependency { details ->
+      if (details.requested.group == 'org.jetbrains.kotlin') {
+        details.useVersion rootProject.ext.kotlinVersion ?: '2.0.21'
+      }
+    }
+  }
+}
+
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
+
+  // Pin androidx.core to the last 1.x release that targets compileSdk 35.
+  // Some transitive dependency (e.g. via expo / react-native pulls) requested
+  // androidx.core:core:1.17.0 which needs compileSdk 36 + AGP 8.9.1, which
+  // would force a major Android toolchain bump. Sticking with 1.15.0 keeps
+  // us on the current compileSdk 35 + AGP 8.6 line.
+  //
+  // Also pin kotlin-stdlib (and family) to 2.0.21 — the Expo/KSP config we
+  // set in gradle.properties (`android.kotlinVersion=2.0.21`). androidx.core
+  // 1.15 transitively requested kotlin-stdlib 2.1.0 which made `expo-modules-
+  // core:compileReleaseKotlin` fail with "metadata version 2.1.0 vs compiler
+  // 1.9.0". Forcing 2.0.21 keeps every Kotlin classpath consistent.
+  configurations.all {
+    resolutionStrategy {
+      force 'androidx.core:core:1.15.0'
+      force 'androidx.core:core-ktx:1.15.0'
+      force 'org.jetbrains.kotlin:kotlin-stdlib:2.0.21'
+      force 'org.jetbrains.kotlin:kotlin-stdlib-common:2.0.21'
+      force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21'
+      force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21'
+      force 'org.jetbrains.kotlin:kotlin-reflect:2.0.21'
+    }
+    resolutionStrategy.eachDependency { details ->
+      if (details.requested.group == 'org.jetbrains.kotlin'
+          && details.requested.name.startsWith('kotlin-')) {
+        details.useVersion '2.0.21'
+        details.because('Pin every Kotlin artifact to the version compiled into our Kotlin Gradle Plugin to avoid metadata mismatches.')
+      }
+    }
+  }
+}
+
+// NOTE: `apply plugin: "expo-root-project"` was the SDK 50/51 entry point for
+// Expo's shared root-project gradle config. SDK 52 removed that plugin (no
+// expo-modules-autolinking package in this install ships it any more), so
+// applying it here previously failed every build with
+// "Plugin with id 'expo-root-project' not found." The Expo autolinking
+// initialisation now happens entirely inside `useExpoModules()` in
+// settings.gradle, so the explicit apply is no longer needed.
+apply plugin: "com.facebook.react.rootproject"
+
+// -----------------------------------------------------------------------------
+// CMake path-length workaround for Windows
+// -----------------------------------------------------------------------------
+// The project lives under D:\SCAD\Codebase\devops\smarthelp\SmartHelp\SmartSCAD
+// .Mobile\SmartSCAD.Mobile.App which is 81 chars. The default per-module .cxx
+// output directory therefore ends up looking like:
+//   <projectDir>/node_modules/react-native-reanimated/android/.cxx/RelWithDebInfo/<hash>/arm64-v8a/src/main/cpp/reanimated/CMakeFiles/reanimated.dir/...
+// which exceeds the 250-char limit CMake/ninja enforce. CMake then keeps
+// regenerating build.ninja and the build dies with:
+//   "ninja: error: manifest 'build.ninja' still dirty after 100 tries"
+//
+// We inject `CMAKE_OBJECT_PATH_MAX=4096` into every native subproject's CMake
+// invocation so the generator stops bailing on long paths.
+//
+// `plugins.withId` fires both *immediately* for plugins that have already been
+// applied (covers eagerly-evaluated subprojects like react-native autolinked
+// modules) AND in the future for plugins applied later — so it sidesteps the
+// "Project already evaluated" error that `afterEvaluate` hits on this layout.
+subprojects { sub ->
+  ['com.android.application', 'com.android.library'].each { pid ->
+    sub.plugins.withId(pid) {
+      sub.android {
+        defaultConfig {
+          externalNativeBuild {
+            cmake {
+              arguments "-DCMAKE_OBJECT_PATH_MAX=4096"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+diff --git a/node_modules/@expo/cli/build/src/start/server/metro/withMetroMultiPlatform.js b/node_modules/@expo/cli/build/src/start/server/metro/withMetroMultiPlatform.js
+index ce3ed79..4893fae 100644
+--- a/node_modules/@expo/cli/build/src/start/server/metro/withMetroMultiPlatform.js
++++ b/node_modules/@expo/cli/build/src/start/server/metro/withMetroMultiPlatform.js
+@@ -98,8 +98,11 @@ function withWebPolyfills(config, { getMetroBundler }) {
+                 // and called later.
+                 return `global.$$require_external = typeof require !== "undefined" ? (m) => require(m) : () => null;`;
+             } else {
+-                // Wrap in try/catch to support Android.
+-                return 'try { global.$$require_external = typeof expo === "undefined" ? require : (moduleId) => { throw new Error(`Node.js standard library module ${moduleId} is not available in this JavaScript environment`);} } catch { global.$$require_external = (moduleId) => { throw new Error(`Node.js standard library module ${moduleId} is not available in this JavaScript environment`);} }';
++                // Never reference bare `require` on native (Hermes has no global require; Metro
++                // is __r). The ternary with typeof expo still evaluates the `require` identifier
++                // and crashes: "[runtime not ready]: Property 'require' doesn't exist" (expo#44384).
++                // Node.js built-ins are unavailable in RN anyway; always use the throwing stub.
++                return 'try { global.$$require_external = (moduleId) => { throw new Error(`Node.js standard library module ${moduleId} is not available in this JavaScript environment`);} } catch { global.$$require_external = (moduleId) => { throw new Error(`Node.js standard library module ${moduleId} is not available in this JavaScript environment`);} }';
+             }
+         })());
+         const virtualModulesPolyfills = [

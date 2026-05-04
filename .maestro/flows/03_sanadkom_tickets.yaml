@@ -1,0 +1,12 @@
+# Flow 3 — Sanadkom ticket list. Tab is omitted for executive users; pick a non-exec dev user.
+appId: com.mazhar1785.smartscadmobile
+---
+- runFlow: ../subflows/login_dev.yaml
+- tapOn:
+    id: 'tab_bar_sanadkom'
+- extendedWaitUntil:
+    visible:
+      id: 'screen.ticket_list'
+    timeout: 60000
+- assertVisible:
+    id: 'tickets.new_request'

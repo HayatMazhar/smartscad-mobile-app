@@ -1,0 +1,62 @@
+pluginManagement {
+  // SDK 55 / RN 0.83: include the React Native gradle plugin AND the Expo gradle plugin
+  // (which ships the `expo-autolinking-settings` plugin replacing the old
+  // `node_modules/expo/scripts/autolinking.gradle` apply-from pattern).
+  // Both paths are resolved via Node so monorepo / hoisted layouts still work.
+  includeBuild(new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
+    }.standardOutput.asText.get().trim()
+  ).getParentFile().absolutePath)
+
+  includeBuild(new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })")
+    }.standardOutput.asText.get().trim()
+  ).getParentFile().absolutePath + "/android/expo-gradle-plugin")
+}
+
+plugins {
+  id("com.facebook.react.settings")
+  id("expo-autolinking-settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+  ex.autolinkLibrariesFromCommand()
+}
+
+// SDK 55 expo modules autolinking — replaces the old `useExpoModules()` global call.
+expoAutolinking.useExpoModules()
+
+// Register the React Native gradle version catalog (`reactAndroidLibs`) that
+// app/build.gradle reads to pin transitive Facebook artefacts (e.g. fresco)
+// to the exact version RN 0.83 ships with.
+dependencyResolutionManagement {
+  versionCatalogs {
+    reactAndroidLibs {
+      from(files(new File(
+        providers.exec {
+          workingDir(rootDir)
+          commandLine("node", "--print", "require.resolve('react-native/package.json')")
+        }.standardOutput.asText.get().trim(),
+        "../gradle/libs.versions.toml"
+      )))
+    }
+  }
+}
+
+rootProject.name = 'SmartSCADMobile'
+
+include ':app'
+
+// Also include the React Native gradle plugin at the root settings scope so the root
+// project's `buildscript.dependencies.classpath('com.facebook.react:react-native-gradle-plugin')`
+// (without an explicit version) gets substituted from the included composite build.
+includeBuild(new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
+  }.standardOutput.asText.get().trim()
+).getParentFile().absolutePath)

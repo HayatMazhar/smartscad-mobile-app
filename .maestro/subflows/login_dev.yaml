@@ -1,0 +1,33 @@
+# Shared: UAT dev impersonation (expand Login As, pick first user, sign in).
+appId: com.mazhar1785.smartscadmobile
+---
+- launchApp:
+    clearState: true
+- scrollUntilVisible:
+    element:
+      id: 'auth.dev_panel_toggle'
+    direction: DOWN
+    timeout: 120000
+    speed: 65
+    visibilityPercentage: 50
+- tapOn:
+    id: 'auth.dev_panel_toggle'
+- extendedWaitUntil:
+    visible:
+      id: 'auth.dev_user_picker'
+    timeout: 30000
+- tapOn:
+    id: 'auth.dev_user_picker'
+- extendedWaitUntil:
+    visible:
+      text: 'Select user'
+    timeout: 30000
+- tapOn:
+    id: 'auth.dev_user_row'
+    index: 0
+- tapOn:
+    id: 'auth.dev_sign_in'
+- extendedWaitUntil:
+    visible:
+      id: 'tab_bar_more'
+    timeout: 120000

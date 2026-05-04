@@ -1,0 +1,4 @@
+# Flow 1 — Dev sign-in smoke (shared subflow only).
+appId: com.mazhar1785.smartscadmobile
+---
+- runFlow: ../subflows/login_dev.yaml

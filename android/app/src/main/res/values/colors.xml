@@ -1,0 +1,6 @@
+<resources>
+  <color name="splashscreen_background">#FFFFFF</color>
+  <color name="colorPrimary">#023c69</color>
+  <!-- Launcher adaptive background (matches compositor darker blue upper stop) -->
+    <color name="ic_launcher_bg">#1E4A82</color>
+</resources>

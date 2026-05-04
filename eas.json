@@ -1,0 +1,62 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1",
+        "EXPO_PUBLIC_PROFILE_IMAGE_BASE": "https://www.adsmartsupport.ae"
+      }
+    },
+    "uat": {
+      "distribution": "internal",
+      "prebuildCommand": "expo prebuild --platform ios --clean",
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium",
+        "image": "latest"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1",
+        "EXPO_PUBLIC_PROFILE_IMAGE_BASE": "https://www.adsmartsupport.ae"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "distribution": "store",
+      "prebuildCommand": "expo prebuild --platform ios --clean",
+      "ios": {
+        "resourceClass": "m-medium",
+        "image": "latest"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1",
+        "EXPO_PUBLIC_PROFILE_IMAGE_BASE": "https://www.adsmartsupport.ae"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "apps@scad.ae"
+      }
+    }
+  }
+}
