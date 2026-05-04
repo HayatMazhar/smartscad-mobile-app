@@ -73,6 +73,11 @@ workflows:
 
           mkdir -p /tmp/xcodebuild_logs
           set +e
+          # NOTE: Do NOT override SWIFT_VERSION on the xcodebuild command line.
+          # That forces ALL pod targets to the same Swift version and breaks
+          # ExpoModulesCore which requires Swift 6.0 (per its podspec) for
+          # `extension UIView: @MainActor AnyArgument` isolated-conformance syntax.
+          # Each podspec declares its own swift_version; let CocoaPods honor it.
           xcodebuild \
             -workspace ios/Sanadkom.xcworkspace \
             -scheme Sanadkom \
@@ -84,7 +89,6 @@ workflows:
             PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             IPHONEOS_DEPLOYMENT_TARGET=15.1 \
-            SWIFT_VERSION=5.9 \
             GCC_TREAT_WARNINGS_AS_ERRORS=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=NO \
             archive 2>&1 | tee /tmp/xcodebuild_logs/archive.log

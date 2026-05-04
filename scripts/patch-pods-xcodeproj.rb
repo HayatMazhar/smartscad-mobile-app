@@ -1,21 +1,22 @@
 #!/usr/bin/env ruby
-# Comprehensive Pods.xcodeproj patcher.
-# Run AFTER `pod install`, BEFORE `xcodebuild archive`.
+# Pods.xcodeproj patcher — runs AFTER `pod install`, BEFORE `xcodebuild archive`.
 #
-# Sets on EVERY pod target's EVERY build configuration:
-#   - IPHONEOS_DEPLOYMENT_TARGET = 15.1   (required by expo-modules-core 55.x @MainActor)
-#   - SWIFT_VERSION = 5.0                  (required for @MainActor recognition)
+# Sets ONLY:
+#   - IPHONEOS_DEPLOYMENT_TARGET = 15.1   (required by ExpoModulesCore 55.x)
 #   - GCC_TREAT_WARNINGS_AS_ERRORS = NO   (so deprecation warnings don't fail the build)
 #   - SWIFT_TREAT_WARNINGS_AS_ERRORS = NO
+#   - CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO
+#
+# IMPORTANT: We do NOT touch SWIFT_VERSION. Each pod's podspec declares its own
+# required Swift version (e.g. ExpoModulesCore = 6.0 for @MainActor isolated
+# conformances). Overriding SWIFT_VERSION globally breaks ExpoModulesCore which
+# uses Swift 6 syntax like `extension UIView: @MainActor AnyArgument`.
 
 require 'xcodeproj'
 
 PODS_PROJECT_PATH = File.join(__dir__, '..', 'ios', 'Pods', 'Pods.xcodeproj')
 MIN_TARGET = '15.1'
 MIN_TARGET_F = MIN_TARGET.to_f
-# expo-modules-core 55.x uses `extension UIView: @MainActor AnyArgument` syntax
-# which requires Swift 5.9+. Setting it lower causes "unknown attribute 'MainActor'".
-SWIFT_VER = '5.9'
 
 unless File.exist?(PODS_PROJECT_PATH)
   abort "[patch] ERROR: Pods.xcodeproj not found at #{PODS_PROJECT_PATH}"
@@ -25,7 +26,6 @@ project = Xcodeproj::Project.open(PODS_PROJECT_PATH)
 puts "[patch] Loaded Pods.xcodeproj (#{project.targets.length} targets)"
 
 deploy_changed = 0
-swift_changed = 0
 warn_changed = 0
 
 project.targets.each do |target|
@@ -36,12 +36,6 @@ project.targets.each do |target|
     if current_dt.nil? || current_dt.to_f < MIN_TARGET_F
       bs['IPHONEOS_DEPLOYMENT_TARGET'] = MIN_TARGET
       deploy_changed += 1
-    end
-
-    current_sv = bs['SWIFT_VERSION']
-    if current_sv.nil? || current_sv.to_f < SWIFT_VER.to_f
-      bs['SWIFT_VERSION'] = SWIFT_VER
-      swift_changed += 1
     end
 
     bs['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
@@ -64,12 +58,14 @@ project.save
 
 puts "[patch] Done."
 puts "[patch]   IPHONEOS_DEPLOYMENT_TARGET set on #{deploy_changed} configs"
-puts "[patch]   SWIFT_VERSION set on #{swift_changed} configs"
 puts "[patch]   Warnings-as-errors disabled on #{warn_changed} configs"
+puts "[patch]   SWIFT_VERSION left UNTOUCHED — using each podspec's declared version"
 
 puts ""
-puts "[patch] Verification — sample of pod targets after patch:"
-project.targets.first(5).each do |target|
+puts "[patch] Verification — SWIFT_VERSION on key pod targets after patch:"
+key_targets = ['ExpoModulesCore', 'Expo', 'React-Core', 'RCTSwiftUI', 'ExpoLogBox']
+project.targets.each do |target|
+  next unless key_targets.include?(target.name)
   cfg = target.build_configurations.find { |c| c.name == 'Release' } || target.build_configurations.first
   next unless cfg
   bs = cfg.build_settings
