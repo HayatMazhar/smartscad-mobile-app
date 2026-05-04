@@ -33,25 +33,36 @@ workflows:
         script: npm install
 
       - name: Expo prebuild (generate ios/ folder)
-        script: npx expo prebuild --platform ios --clean --no-install
+        script: |
+          # --no-install skips pod install (we do it separately with --repo-update)
+          npx expo prebuild --platform ios --clean --no-install
+          echo "=== Podfile check ==="
+          head -5 ios/Podfile
 
       - name: Install CocoaPods
         script: |
           cd ios
           pod install --repo-update
+          if [ $? -ne 0 ]; then
+            echo "pod install failed — retrying with repo update"
+            pod repo update && pod install
+          fi
           cd ..
           echo "=== iOS folder contents after pod install ==="
           ls -la ios/
-          echo "=== xcworkspace files ==="
-          find ios -name "*.xcworkspace" -maxdepth 2
+          # Verify the real workspace exists (NOT the one inside .xcodeproj)
+          if [ ! -d "ios/Sanadkom.xcworkspace" ]; then
+            echo "ERROR: ios/Sanadkom.xcworkspace not found after pod install"
+            exit 1
+          fi
+          echo "Workspace confirmed: ios/Sanadkom.xcworkspace"
 
       - name: Build iOS IPA
         script: |
-          # Discover the actual workspace path
-          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 2 | head -1)
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          echo "Using workspace: $WORKSPACE"
-          echo "Using scheme: $SCHEME"
+          # Use the CocoaPods workspace directly (NOT the internal project.xcworkspace)
+          WORKSPACE="ios/Sanadkom.xcworkspace"
+          SCHEME="Sanadkom"
+          echo "Using workspace: $WORKSPACE  scheme: $SCHEME"
           xcode-project use-profiles
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
