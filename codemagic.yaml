@@ -15,12 +15,29 @@ workflows:
     scripts:
       - name: Set up code signing
         script: |
+          set -e
           echo $CM_CERTIFICATE | base64 --decode > /tmp/distribution.p12
           keychain initialize
           keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
-          echo $CM_PROVISIONING_PROFILE | base64 --decode > /tmp/adhoc.mobileprovision
+
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/adhoc.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          # Install AdHoc profile (UUID 5f216e3b-9259-4789-b99b-80b12b352966)
+          if [ -z "$CM_PROVISIONING_PROFILE" ]; then echo "ERROR: CM_PROVISIONING_PROFILE env var is empty"; exit 1; fi
+          echo $CM_PROVISIONING_PROFILE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/5f216e3b-9259-4789-b99b-80b12b352966.mobileprovision
+
+          # Install AppStore profile (UUID a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7)
+          if [ -z "$CM_PROVISIONING_PROFILE_APPSTORE" ]; then echo "ERROR: CM_PROVISIONING_PROFILE_APPSTORE env var is empty"; exit 1; fi
+          echo $CM_PROVISIONING_PROFILE_APPSTORE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7.mobileprovision
+
+          echo "=== Installed provisioning profiles ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "=== Profile contents (UUID + Name) ==="
+          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            echo "File: $f"
+            security cms -D -i "$f" 2>/dev/null | grep -A1 -E "<key>(UUID|Name|application-identifier)</key>" | grep -v -- "--" || true
+            echo "---"
+          done
 
       - name: Install Node dependencies
         script: npm install
@@ -48,9 +65,8 @@ workflows:
       - name: Build iOS IPA
         script: |
           set -e
-          echo $CM_PROVISIONING_PROFILE_APPSTORE | base64 --decode > /tmp/appstore.mobileprovision
-          cp /tmp/appstore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
+          # Export options use AdHoc UUID for IPA distribution.
           cat > /tmp/ExportOptions.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -65,7 +81,7 @@ workflows:
             <key>provisioningProfiles</key>
             <dict>
               <key>ae.adsmartsupport.smartscadmobile</key>
-              <string>*[expo] ae.adsmartsupport.smartscadmobile AdHoc 1777892514262</string>
+              <string>5f216e3b-9259-4789-b99b-80b12b352966</string>
             </dict>
           </dict>
           </plist>
@@ -78,6 +94,12 @@ workflows:
           # ExpoModulesCore which requires Swift 6.0 (per its podspec) for
           # `extension UIView: @MainActor AnyArgument` isolated-conformance syntax.
           # Each podspec declares its own swift_version; let CocoaPods honor it.
+          #
+          # Profiles are referenced by UUID (not name) because the Expo-issued
+          # name has a leading `*` and embedded `:` which Xcode's name lookup
+          # rejects. UUIDs are unambiguous.
+          #   AppStore UUID = a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7  (used for archive)
+          #   AdHoc    UUID = 5f216e3b-9259-4789-b99b-80b12b352966  (used for export)
           xcodebuild \
             -workspace ios/Sanadkom.xcworkspace \
             -scheme Sanadkom \
@@ -86,7 +108,7 @@ workflows:
             -destination "generic/platform=iOS" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=87KPX56NJY \
-            PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
+            PROVISIONING_PROFILE_SPECIFIER=a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7 \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             IPHONEOS_DEPLOYMENT_TARGET=15.1 \
             GCC_TREAT_WARNINGS_AS_ERRORS=NO \
