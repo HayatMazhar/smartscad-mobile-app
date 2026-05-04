@@ -11,20 +11,13 @@ workflows:
         EXPO_PUBLIC_API_BASE_URL: "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
         EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
         BUNDLE_ID: "ae.adsmartsupport.smartscadmobile"
-      # These 3 must be added in Codemagic UI → Environment variables (encrypted):
-      #   CM_CERTIFICATE          — base64 of distribution.p12  (see codemagic-creds/distribution_p12_base64.txt)
-      #   CM_CERTIFICATE_PASSWORD — p12 password
-      #   CM_PROVISIONING_PROFILE — base64 of Ad Hoc .mobileprovision  (see codemagic-creds/adhoc_profile_base64.txt)
 
     scripts:
       - name: Set up code signing
         script: |
-          # Decode and install the p12 certificate
           echo $CM_CERTIFICATE | base64 --decode > /tmp/distribution.p12
           keychain initialize
           keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
-
-          # Decode and install the provisioning profile
           echo $CM_PROVISIONING_PROFILE | base64 --decode > /tmp/adhoc.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp /tmp/adhoc.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
@@ -34,39 +27,33 @@ workflows:
 
       - name: Expo prebuild (generate ios/ folder)
         script: |
-          # --no-install skips pod install (we do it separately with --repo-update)
           npx expo prebuild --platform ios --clean --no-install
-          echo "=== Podfile check ==="
-          head -5 ios/Podfile
+          echo "=== Podfile first 10 lines ==="
+          head -10 ios/Podfile
+          echo "=== node_modules/react-native-mmkv exists? ==="
+          ls node_modules/react-native-mmkv/react-native-mmkv.podspec 2>/dev/null && echo "YES" || echo "NO - mmkv podspec missing!"
 
       - name: Install CocoaPods
         script: |
-          cd ios
-          pod install --repo-update
-          if [ $? -ne 0 ]; then
-            echo "pod install failed — retrying with repo update"
-            pod repo update && pod install
-          fi
-          cd ..
-          echo "=== iOS folder contents after pod install ==="
+          # Run pod install from project root so relative paths resolve correctly
+          # pod install reads ios/Podfile which references ../node_modules/*
+          # Those paths resolve to <project_root>/node_modules/* which is correct
+          pod install --project-directory=ios --repo-update
+          echo "Exit code: $?"
+          echo "=== iOS folder after pod install ==="
           ls -la ios/
-          # Verify the real workspace exists (NOT the one inside .xcodeproj)
           if [ ! -d "ios/Sanadkom.xcworkspace" ]; then
-            echo "ERROR: ios/Sanadkom.xcworkspace not found after pod install"
+            echo "ERROR: Sanadkom.xcworkspace not created — pod install likely failed above"
             exit 1
           fi
-          echo "Workspace confirmed: ios/Sanadkom.xcworkspace"
+          echo "SUCCESS: ios/Sanadkom.xcworkspace exists"
 
       - name: Build iOS IPA
         script: |
-          # Use the CocoaPods workspace directly (NOT the internal project.xcworkspace)
-          WORKSPACE="ios/Sanadkom.xcworkspace"
-          SCHEME="Sanadkom"
-          echo "Using workspace: $WORKSPACE  scheme: $SCHEME"
           xcode-project use-profiles
           xcode-project build-ipa \
-            --workspace "$WORKSPACE" \
-            --scheme "$SCHEME" \
+            --workspace ios/Sanadkom.xcworkspace \
+            --scheme Sanadkom \
             --config Release
 
     artifacts:
@@ -94,7 +81,6 @@ workflows:
         EXPO_PUBLIC_API_BASE_URL: "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
         EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
         BUNDLE_ID: "ae.adsmartsupport.smartscadmobile"
-      # CM_CERTIFICATE, CM_CERTIFICATE_PASSWORD, CM_PROVISIONING_PROFILE_APPSTORE must be set in UI
 
     scripts:
       - name: Set up code signing
@@ -114,19 +100,15 @@ workflows:
 
       - name: Install CocoaPods
         script: |
-          cd ios
-          pod install --repo-update
-          cd ..
+          pod install --project-directory=ios --repo-update
+          if [ ! -d "ios/Sanadkom.xcworkspace" ]; then exit 1; fi
 
       - name: Build iOS IPA
         script: |
-          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 2 | head -1)
-          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-          echo "Using workspace: $WORKSPACE  scheme: $SCHEME"
           xcode-project use-profiles
           xcode-project build-ipa \
-            --workspace "$WORKSPACE" \
-            --scheme "$SCHEME" \
+            --workspace ios/Sanadkom.xcworkspace \
+            --scheme Sanadkom \
             --config Release
 
     artifacts:
