@@ -13,7 +13,9 @@ require 'xcodeproj'
 PODS_PROJECT_PATH = File.join(__dir__, '..', 'ios', 'Pods', 'Pods.xcodeproj')
 MIN_TARGET = '15.1'
 MIN_TARGET_F = MIN_TARGET.to_f
-SWIFT_VER = '5.0'
+# expo-modules-core 55.x uses `extension UIView: @MainActor AnyArgument` syntax
+# which requires Swift 5.9+. Setting it lower causes "unknown attribute 'MainActor'".
+SWIFT_VER = '5.9'
 
 unless File.exist?(PODS_PROJECT_PATH)
   abort "[patch] ERROR: Pods.xcodeproj not found at #{PODS_PROJECT_PATH}"

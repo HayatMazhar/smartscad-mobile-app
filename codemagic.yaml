@@ -84,7 +84,7 @@ workflows:
             PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             IPHONEOS_DEPLOYMENT_TARGET=15.1 \
-            SWIFT_VERSION=5.0 \
+            SWIFT_VERSION=5.9 \
             GCC_TREAT_WARNINGS_AS_ERRORS=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=NO \
             archive 2>&1 | tee /tmp/xcodebuild_logs/archive.log
