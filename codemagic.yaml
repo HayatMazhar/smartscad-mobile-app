@@ -7,6 +7,8 @@ workflows:
     environment:
       xcode: 16.2
       node: 22.14.0
+      groups:
+        - ios_signing
       vars:
         EXPO_PUBLIC_API_BASE_URL: "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
         EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
@@ -16,9 +18,13 @@ workflows:
       - name: Set up code signing
         script: |
           set -e
-          echo $CM_CERTIFICATE | base64 --decode > /tmp/distribution.p12
+          if [ -z "$CM_CERTIFICATE" ]; then echo "ERROR: CM_CERTIFICATE env var is empty"; exit 1; fi
+          if [ -z "$CM_CERTIFICATE_PASSWORD" ]; then echo "ERROR: CM_CERTIFICATE_PASSWORD env var is empty"; exit 1; fi
+
+          echo "$CM_CERTIFICATE" | base64 --decode > /tmp/distribution.p12
+          ls -la /tmp/distribution.p12
           keychain initialize
-          keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
+          keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password "$CM_CERTIFICATE_PASSWORD"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
 
@@ -161,6 +167,8 @@ workflows:
     environment:
       xcode: 16.2
       node: 22.14.0
+      groups:
+        - ios_signing
       vars:
         EXPO_PUBLIC_API_BASE_URL: "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
         EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
@@ -169,12 +177,18 @@ workflows:
     scripts:
       - name: Set up code signing
         script: |
-          echo $CM_CERTIFICATE | base64 --decode > /tmp/distribution.p12
+          set -e
+          if [ -z "$CM_CERTIFICATE" ]; then echo "ERROR: CM_CERTIFICATE env var is empty"; exit 1; fi
+          if [ -z "$CM_CERTIFICATE_PASSWORD" ]; then echo "ERROR: CM_CERTIFICATE_PASSWORD env var is empty"; exit 1; fi
+          if [ -z "$CM_PROVISIONING_PROFILE_APPSTORE" ]; then echo "ERROR: CM_PROVISIONING_PROFILE_APPSTORE env var is empty"; exit 1; fi
+
+          echo "$CM_CERTIFICATE" | base64 --decode > /tmp/distribution.p12
           keychain initialize
-          keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
-          echo $CM_PROVISIONING_PROFILE_APPSTORE | base64 --decode > /tmp/appstore.mobileprovision
+          keychain add-certificates --certificate /tmp/distribution.p12 --certificate-password "$CM_CERTIFICATE_PASSWORD"
+
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/appstore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          # Install AppStore profile by UUID
+          echo "$CM_PROVISIONING_PROFILE_APPSTORE" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7.mobileprovision
 
       - name: Install Node dependencies
         script: npm install
