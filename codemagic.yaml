@@ -40,13 +40,22 @@ workflows:
           cd ios
           pod install --repo-update
           cd ..
+          echo "=== iOS folder contents after pod install ==="
+          ls -la ios/
+          echo "=== xcworkspace files ==="
+          find ios -name "*.xcworkspace" -maxdepth 2
 
       - name: Build iOS IPA
         script: |
+          # Discover the actual workspace path
+          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 2 | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Using workspace: $WORKSPACE"
+          echo "Using scheme: $SCHEME"
           xcode-project use-profiles
           xcode-project build-ipa \
-            --workspace ios/Sanadkom.xcworkspace \
-            --scheme Sanadkom \
+            --workspace "$WORKSPACE" \
+            --scheme "$SCHEME" \
             --config Release
 
     artifacts:
@@ -100,10 +109,13 @@ workflows:
 
       - name: Build iOS IPA
         script: |
+          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 2 | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Using workspace: $WORKSPACE  scheme: $SCHEME"
           xcode-project use-profiles
           xcode-project build-ipa \
-            --workspace ios/Sanadkom.xcworkspace \
-            --scheme Sanadkom \
+            --workspace "$WORKSPACE" \
+            --scheme "$SCHEME" \
             --config Release
 
     artifacts:
