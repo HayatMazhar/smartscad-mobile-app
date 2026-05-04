@@ -28,8 +28,8 @@ workflows:
       - name: Expo prebuild (generate ios/ folder)
         script: |
           npx expo prebuild --platform ios --clean --no-install
-          echo "=== Podfile post_install section ==="
-          grep -A 20 "post_install" ios/Podfile || true
+          echo "=== Patching Podfile via Ruby script ==="
+          ruby scripts/patch-podfile-deployment-target.rb
 
       - name: Install CocoaPods
         script: |
@@ -139,7 +139,7 @@ workflows:
       - name: Expo prebuild (generate ios/ folder)
         script: |
           npx expo prebuild --platform ios --clean --no-install
-          grep -A 20 "post_install" ios/Podfile || true
+          ruby scripts/patch-podfile-deployment-target.rb
 
       - name: Install CocoaPods
         script: |
