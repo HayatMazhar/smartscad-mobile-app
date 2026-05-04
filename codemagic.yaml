@@ -54,7 +54,9 @@ workflows:
           xcode-project build-ipa \
             --workspace ios/Sanadkom.xcworkspace \
             --scheme Sanadkom \
-            --config Release
+            --config Release \
+            --disable-xcpretty \
+            --log-stream stdout
 
     artifacts:
       - build/ios/ipa/*.ipa
