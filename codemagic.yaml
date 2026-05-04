@@ -29,20 +29,21 @@ workflows:
         script: |
           npx expo prebuild --platform ios --clean --no-install
           echo "=== Patching Podfile: force IPHONEOS_DEPLOYMENT_TARGET=15.1 on all pods ==="
-          # Append a post_install hook that raises deployment target on every pod target
-          cat >> ios/Podfile << 'RUBY'
-
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
-      if current.nil? || current.to_f < 15.1
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
-      end
-    end
-  end
-end
-RUBY
+          python3 -c "
+          patch = '''
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.each do |config|
+                v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+                if v.nil? || v.to_f < 15.1
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+                end
+              end
+            end
+          end
+          '''
+          open('ios/Podfile', 'a').write(patch)
+          "
           echo "=== Podfile last 15 lines ==="
           tail -15 ios/Podfile
 
@@ -151,8 +152,24 @@ RUBY
       - name: Install Node dependencies
         script: npm install
 
-      - name: Expo prebuild
-        script: npx expo prebuild --platform ios --clean --no-install
+      - name: Expo prebuild (generate ios/ folder)
+        script: |
+          npx expo prebuild --platform ios --clean --no-install
+          python3 -c "
+          patch = '''
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.each do |config|
+                v = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+                if v.nil? || v.to_f < 15.1
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+                end
+              end
+            end
+          end
+          '''
+          open('ios/Podfile', 'a').write(patch)
+          "
 
       - name: Install CocoaPods
         script: |
