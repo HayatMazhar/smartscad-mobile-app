@@ -1,47 +1,75 @@
 #!/usr/bin/env ruby
-# Patches ios/Pods/Pods.xcodeproj to set IPHONEOS_DEPLOYMENT_TARGET = 15.1
-# on EVERY target's build configurations.
+# Comprehensive Pods.xcodeproj patcher.
+# Run AFTER `pod install`, BEFORE `xcodebuild archive`.
 #
-# Run this AFTER `pod install`. It modifies the generated Xcode project directly
-# so it doesn't matter what the Podfile post_install hooks did.
-#
-# Why: Newer expo-modules-core (55.x) uses @MainActor / Swift concurrency that
-# requires iOS 15.1 minimum. Xcode 16 + Swift 6 enforces this strictly.
+# Sets on EVERY pod target's EVERY build configuration:
+#   - IPHONEOS_DEPLOYMENT_TARGET = 15.1   (required by expo-modules-core 55.x @MainActor)
+#   - SWIFT_VERSION = 5.0                  (required for @MainActor recognition)
+#   - GCC_TREAT_WARNINGS_AS_ERRORS = NO   (so deprecation warnings don't fail the build)
+#   - SWIFT_TREAT_WARNINGS_AS_ERRORS = NO
 
 require 'xcodeproj'
 
 PODS_PROJECT_PATH = File.join(__dir__, '..', 'ios', 'Pods', 'Pods.xcodeproj')
 MIN_TARGET = '15.1'
 MIN_TARGET_F = MIN_TARGET.to_f
+SWIFT_VER = '5.0'
 
 unless File.exist?(PODS_PROJECT_PATH)
-  abort "[patch-pods-xcodeproj] ERROR: Pods.xcodeproj not found at #{PODS_PROJECT_PATH}. Did you run 'pod install'?"
+  abort "[patch] ERROR: Pods.xcodeproj not found at #{PODS_PROJECT_PATH}"
 end
 
 project = Xcodeproj::Project.open(PODS_PROJECT_PATH)
-patched_count = 0
+puts "[patch] Loaded Pods.xcodeproj (#{project.targets.length} targets)"
+
+deploy_changed = 0
+swift_changed = 0
+warn_changed = 0
 
 project.targets.each do |target|
   target.build_configurations.each do |config|
-    current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
-    if current.nil? || current.to_f < MIN_TARGET_F
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = MIN_TARGET
-      patched_count += 1
-      puts "  patched #{target.name} (#{config.name}): was=#{current.inspect} -> #{MIN_TARGET}"
+    bs = config.build_settings
+
+    current_dt = bs['IPHONEOS_DEPLOYMENT_TARGET']
+    if current_dt.nil? || current_dt.to_f < MIN_TARGET_F
+      bs['IPHONEOS_DEPLOYMENT_TARGET'] = MIN_TARGET
+      deploy_changed += 1
     end
+
+    current_sv = bs['SWIFT_VERSION']
+    if current_sv.nil? || current_sv.to_f < SWIFT_VER.to_f
+      bs['SWIFT_VERSION'] = SWIFT_VER
+      swift_changed += 1
+    end
+
+    bs['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+    bs['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+    bs['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+    warn_changed += 1
   end
 end
 
-# Also patch the project-level build configurations
 project.build_configurations.each do |config|
-  current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
-  if current.nil? || current.to_f < MIN_TARGET_F
-    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = MIN_TARGET
-    patched_count += 1
-    puts "  patched project (#{config.name}): was=#{current.inspect} -> #{MIN_TARGET}"
+  bs = config.build_settings
+  current_dt = bs['IPHONEOS_DEPLOYMENT_TARGET']
+  if current_dt.nil? || current_dt.to_f < MIN_TARGET_F
+    bs['IPHONEOS_DEPLOYMENT_TARGET'] = MIN_TARGET
+    deploy_changed += 1
   end
 end
 
 project.save
 
-puts "[patch-pods-xcodeproj] Done. Patched #{patched_count} build configurations."
+puts "[patch] Done."
+puts "[patch]   IPHONEOS_DEPLOYMENT_TARGET set on #{deploy_changed} configs"
+puts "[patch]   SWIFT_VERSION set on #{swift_changed} configs"
+puts "[patch]   Warnings-as-errors disabled on #{warn_changed} configs"
+
+puts ""
+puts "[patch] Verification — sample of pod targets after patch:"
+project.targets.first(5).each do |target|
+  cfg = target.build_configurations.find { |c| c.name == 'Release' } || target.build_configurations.first
+  next unless cfg
+  bs = cfg.build_settings
+  puts "  #{target.name}: deployment=#{bs['IPHONEOS_DEPLOYMENT_TARGET'].inspect} swift=#{bs['SWIFT_VERSION'].inspect}"
+end

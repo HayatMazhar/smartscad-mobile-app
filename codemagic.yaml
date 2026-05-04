@@ -84,6 +84,9 @@ workflows:
             PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             IPHONEOS_DEPLOYMENT_TARGET=15.1 \
+            SWIFT_VERSION=5.0 \
+            GCC_TREAT_WARNINGS_AS_ERRORS=NO \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=NO \
             archive 2>&1 | tee /tmp/xcodebuild_logs/archive.log
           ARCHIVE_EXIT=${PIPESTATUS[0]}
           set -e
@@ -91,10 +94,14 @@ workflows:
           if [ ! -d "/tmp/Sanadkom.xcarchive" ]; then
             echo ""
             echo "==================== ARCHIVE FAILED (exit=$ARCHIVE_EXIT) ===================="
-            echo "==================== Last 200 lines of build log ===================="
-            tail -200 /tmp/xcodebuild_logs/archive.log
-            echo "==================== Errors only ===================="
-            grep -E "(error:|fatal error:|❌|Cannot find|unknown attribute)" /tmp/xcodebuild_logs/archive.log | head -50 || echo "No grep matches"
+            echo "==================== REAL Swift/clang errors (file:line:col format) ===================="
+            grep -E "^[^:]+\.(swift|m|mm|h|cpp|cc):[0-9]+:[0-9]+:.*error:" /tmp/xcodebuild_logs/archive.log | head -30 || echo "No file-line errors found"
+            echo ""
+            echo "==================== Other 'error generated' / 'fatal' lines ===================="
+            grep -E "(error generated|fatal error|FAILED:|❌|unknown attribute|Cannot find)" /tmp/xcodebuild_logs/archive.log | grep -v "error:(NSError" | head -30 || echo "No matches"
+            echo ""
+            echo "==================== Last 100 lines of archive log ===================="
+            tail -100 /tmp/xcodebuild_logs/archive.log
             exit 1
           fi
 
@@ -109,6 +116,7 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      - /tmp/Sanadkom.xcarchive
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
