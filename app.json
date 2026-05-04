@@ -9,7 +9,7 @@
     "icon": "./src/assets/sanadkom_apk_icon_composite.png",
     "ios": {
       "bundleIdentifier": "ae.adsmartsupport.smartscadmobile",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "supportsTablet": true,
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -51,7 +51,10 @@
             "extraPods": [
               {
                 "name": "react-native-mmkv",
-                "configurations": ["Debug", "Release"],
+                "configurations": [
+                  "Debug",
+                  "Release"
+                ],
                 "xcconfig": {
                   "OTHER_LDFLAGS": "$(inherited) -lz"
                 }

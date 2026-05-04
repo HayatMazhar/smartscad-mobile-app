@@ -21,7 +21,6 @@
     },
     "uat": {
       "distribution": "internal",
-      "prebuildCommand": "expo prebuild --platform ios --clean",
       "ios": {
         "simulator": false,
         "resourceClass": "m-medium",
@@ -38,7 +37,6 @@
     "production": {
       "autoIncrement": true,
       "distribution": "store",
-      "prebuildCommand": "expo prebuild --platform ios --clean",
       "ios": {
         "resourceClass": "m-medium",
         "image": "latest"

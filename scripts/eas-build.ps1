@@ -99,11 +99,12 @@ Write-Host ("    Staged size: {0:N1} MB" -f ($staged / 1MB))
 Write-Host "==> [3/4] Installing node_modules in stage (npm install)..." -ForegroundColor Yellow
 Push-Location $StagePath
 try {
-    # Redirect stderr to stdout so PowerShell doesn't treat npm warnings as errors
-    $npmOut = & npm install --prefer-offline --no-audit --no-fund 2>&1
-    $npmOut | Select-Object -Last 5
-    # npm exits 0 on success, 1 on actual errors; ignore warning-only non-zero
-    if ($LASTEXITCODE -gt 1) { throw "npm install failed with exit code $LASTEXITCODE" }
+    # Use cmd /c to run npm so PowerShell doesn't intercept stderr as errors
+    # --ignore-scripts skips patch-package postinstall (patches already applied in source)
+    cmd /c "npm install --prefer-offline --no-audit --no-fund --ignore-scripts 2>&1"
+    # cmd exit code mirrors npm exit code; 0=success, anything else=real failure
+    if ($LASTEXITCODE -ne 0) { throw "npm install failed with exit code $LASTEXITCODE" }
+    Write-Host "    npm install complete." -ForegroundColor Green
 } finally {
     Pop-Location
 }
