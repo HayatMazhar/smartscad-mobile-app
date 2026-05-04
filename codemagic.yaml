@@ -41,13 +41,16 @@ workflows:
           fi
           echo "SUCCESS: ios/Sanadkom.xcworkspace exists"
 
+      - name: Patch Pods.xcodeproj (force iOS 15.1 on all pod targets)
+        script: |
+          ruby scripts/patch-pods-xcodeproj.rb
+
       - name: Build iOS IPA
         script: |
-          # Decode App Store profile for archiving (no device restriction)
+          set -e
           echo $CM_PROVISIONING_PROFILE_APPSTORE | base64 --decode > /tmp/appstore.mobileprovision
           cp /tmp/appstore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-          # Write export options plist — export as ad-hoc using the ad-hoc profile
           cat > /tmp/ExportOptions.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -68,7 +71,8 @@ workflows:
           </plist>
           EOF
 
-          # Archive using App Store profile (no device check), then export as ad-hoc
+          mkdir -p /tmp/xcodebuild_logs
+          set +e
           xcodebuild \
             -workspace ios/Sanadkom.xcworkspace \
             -scheme Sanadkom \
@@ -80,15 +84,20 @@ workflows:
             PROVISIONING_PROFILE_SPECIFIER="*[expo] ae.adsmartsupport.smartscadmobile AppStore 2026-05-04T08:15:18.093Z" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             IPHONEOS_DEPLOYMENT_TARGET=15.1 \
-            archive 2>&1 | tail -50 || true
+            archive 2>&1 | tee /tmp/xcodebuild_logs/archive.log
+          ARCHIVE_EXIT=${PIPESTATUS[0]}
+          set -e
 
-          # Check archive was created
           if [ ! -d "/tmp/Sanadkom.xcarchive" ]; then
-            echo "Archive failed"
+            echo ""
+            echo "==================== ARCHIVE FAILED (exit=$ARCHIVE_EXIT) ===================="
+            echo "==================== Last 200 lines of build log ===================="
+            tail -200 /tmp/xcodebuild_logs/archive.log
+            echo "==================== Errors only ===================="
+            grep -E "(error:|fatal error:|❌|Cannot find|unknown attribute)" /tmp/xcodebuild_logs/archive.log | head -50 || echo "No grep matches"
             exit 1
           fi
 
-          # Export IPA as ad-hoc
           xcodebuild \
             -exportArchive \
             -archivePath /tmp/Sanadkom.xcarchive \
@@ -145,6 +154,10 @@ workflows:
         script: |
           pod install --project-directory=ios --repo-update
           if [ ! -d "ios/Sanadkom.xcworkspace" ]; then exit 1; fi
+
+      - name: Patch Pods.xcodeproj (force iOS 15.1 on all pod targets)
+        script: |
+          ruby scripts/patch-pods-xcodeproj.rb
 
       - name: Build iOS IPA
         script: |
