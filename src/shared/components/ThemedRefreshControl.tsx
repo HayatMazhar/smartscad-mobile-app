@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Platform, RefreshControl, RefreshControlProps } from 'react-native';
 import { useTheme } from '../../app/theme/ThemeContext';
+import haptics from '../utils/haptics';
 
 export type ThemedRefreshControlProps = Omit<
   RefreshControlProps,
@@ -34,6 +35,7 @@ const ThemedRefreshControl: React.FC<ThemedRefreshControlProps> = ({
   refreshing,
   isFetching,
   isLoading,
+  onRefresh,
   ...rest
 }) => {
   const { colors } = useTheme();
@@ -45,14 +47,28 @@ const ThemedRefreshControl: React.FC<ThemedRefreshControlProps> = ({
       ? isFetching && !(isLoading ?? false)
       : Boolean(refreshing);
 
+  const onRefreshWithHaptic = useCallback(() => {
+    // Light tap when the user pulls past the threshold; iOS-only via util.
+    haptics.lightImpact();
+    onRefresh?.();
+  }, [onRefresh]);
+
   if (Platform.OS === 'ios') {
-    return <RefreshControl {...rest} refreshing={spin} tintColor={tint} />;
+    return (
+      <RefreshControl
+        {...rest}
+        refreshing={spin}
+        onRefresh={onRefreshWithHaptic}
+        tintColor={tint}
+      />
+    );
   }
 
   return (
     <RefreshControl
       {...rest}
       refreshing={spin}
+      onRefresh={onRefresh}
       colors={[tint]}
       progressBackgroundColor={progBg}
     />

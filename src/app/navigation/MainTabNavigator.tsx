@@ -95,6 +95,7 @@ import { useGetApprovalsInboxQuery } from '../../features/approvals/services/app
 import { fallbackStackHeaderLeft } from './stackFallbackBack';
 import { resolveDashboardRoute, shouldOmitDashboardTab } from './resolveDashboardRoute';
 import { PlatformPressable } from '@react-navigation/elements';
+import haptics from '../../shared/utils/haptics';
 
 const tabBarTestId =
   (testID: string) =>
@@ -141,9 +142,51 @@ const TabIcon: React.FC<{ name: SemanticIconName; focused: boolean; color: strin
   );
 };
 
-const defaultScreenOptions = (_colors: any) => ({
-  header: (props: React.ComponentProps<typeof ModernHeader>) => <ModernHeader {...props} />,
-});
+/**
+ * Platform-tuned stack screen defaults:
+ *   iOS    → Apple-native large titles (collapse to compact on scroll), opaque
+ *            surface header, brand-tinted chevron, "minimal" back display
+ *            (chevron only — no parent screen label). Matches modern iOS HIG.
+ *   Android → custom `ModernHeader` (compact, theme-aware, chevron-only back).
+ *
+ * Individual screens can still override `headerLargeTitle`, `headerTitle`,
+ * `header` etc. on a per-route basis. Examples already in use:
+ *   - `headerShown: false` (HomeScreen root, WinnerDetail)
+ *   - `headerLargeTitle: false` for screens that should keep a compact bar.
+ *
+ * NOTE on translucency: we deliberately keep the iOS header opaque here
+ * because `headerTransparent + headerBlurEffect` would push content under
+ * the header and require every ScrollView/FlatList to set
+ * `contentInsetAdjustmentBehavior="automatic"`. We can opt-in to the
+ * translucent blur per-screen later if desired.
+ */
+const defaultScreenOptions = (colors: any) => {
+  if (Platform.OS === 'ios') {
+    return {
+      headerLargeTitle: true,
+      headerLargeTitleShadowVisible: false,
+      headerShadowVisible: false,
+      headerTintColor: colors.primary,
+      headerStyle: { backgroundColor: colors.surface },
+      headerLargeStyle: { backgroundColor: colors.background },
+      headerLargeTitleStyle: {
+        fontSize: 32,
+        fontWeight: '800' as const,
+        color: colors.text,
+      },
+      headerTitleStyle: {
+        fontSize: 17,
+        fontWeight: '700' as const,
+        color: colors.text,
+      },
+      headerBackButtonDisplayMode: 'minimal' as const,
+      contentStyle: { backgroundColor: colors.background },
+    };
+  }
+  return {
+    header: (props: React.ComponentProps<typeof ModernHeader>) => <ModernHeader {...props} />,
+  };
+};
 
 const HomeStackNavigator = () => {
   const { colors } = useTheme();
@@ -238,6 +281,8 @@ function popTabToRootOnReselect(
   tabName: string,
   e: EventArg<'tabPress', true>,
 ) {
+  // Light selection tap on every tab press (iOS-only via util).
+  haptics.selectionTap();
   const rootScreen = tabRootScreenName(tabName);
   if (!rootScreen) return;
   const st = navigation.getState() as {

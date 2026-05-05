@@ -23,6 +23,7 @@ import {
 import { useTheme } from '../../../app/theme/ThemeContext';
 import { API_BASE_URL } from '../../../store/baseApi';
 import ProfileAvatar from '../../../shared/components/ProfileAvatar';
+import haptics from '../../../shared/utils/haptics';
 
 const isWeb = Platform.OS === 'web';
 
@@ -587,11 +588,13 @@ const LoginScreen: React.FC = () => {
 
   const handleLogin = async () => {
     setError('');
+    haptics.mediumImpact();
     try {
       const result = await login({ username, password }).unwrap();
 
       // Trusted device → tokens come back immediately, sign in.
       if (result.kind === 'tokens') {
+        haptics.notifySuccess();
         dispatch(setCredentials({
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
@@ -601,6 +604,7 @@ const LoginScreen: React.FC = () => {
       }
 
       // Untrusted device → server emailed an OTP, switch to the OTP step.
+      haptics.lightImpact();
       dispatch(setPendingOtp({
         otpSessionId: result.otpSessionId,
         maskedEmail: result.maskedEmail,
@@ -615,6 +619,7 @@ const LoginScreen: React.FC = () => {
       setOtpError('');
       setOtpRemainingSec(result.validitySeconds);
     } catch (e: any) {
+      haptics.notifyError();
       // Differentiate "wrong password" (401) from "AD unreachable" (503) so
       // the user isn't told their credentials are wrong when the real issue
       // is a backend / Active Directory outage.
@@ -636,22 +641,26 @@ const LoginScreen: React.FC = () => {
     if (!pendingOtp) return;
     const code = otpCode.trim();
     if (code.length < 4) {
+      haptics.notifyWarning();
       setOtpError('Enter the verification code we just emailed.');
       return;
     }
     setOtpError('');
+    haptics.lightImpact();
     try {
       const result = await verifyOtp({
         otpSessionId: pendingOtp.otpSessionId,
         code,
         trustDevice: true,
       }).unwrap();
+      haptics.notifySuccess();
       dispatch(setCredentials({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         user: result.user,
       }));
     } catch (e: any) {
+      haptics.notifyError();
       const status = e?.status;
       const apiMsg: string | undefined = e?.data?.error || e?.error;
       if (status === 401) setOtpError(apiMsg || 'Incorrect code. Please try again.');

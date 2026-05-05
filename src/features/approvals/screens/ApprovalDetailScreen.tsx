@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { getModuleDisplayName, moduleIcon } from '../utils/moduleLabels';
 import type { ApprovalInboxRow } from '../utils/approvalInboxRouting';
 import WorkflowProgress, { type WorkflowStep } from '../../../shared/components/WorkflowProgress';
 import { formatSmartDateTime } from '../../../shared/utils/dateUtils';
+import haptics from '../../../shared/utils/haptics';
 
 type NavParams = { itemId: string; preview?: ApprovalInboxRow };
 
@@ -231,7 +232,13 @@ const ApprovalDetailScreen: React.FC = () => {
       return;
     }
 
-    if (a.requiresComment && !comment.trim()) return;
+    if (a.requiresComment && !comment.trim()) {
+      haptics.notifyWarning();
+      return;
+    }
+    const isReject = (a.variant === 'danger') || code.includes('REJECT') || code.includes('BACK');
+    if (isReject) haptics.heavyImpact();
+    else haptics.mediumImpact();
     setBusy(a.actionCode);
     try {
       await decide({
@@ -243,8 +250,11 @@ const ApprovalDetailScreen: React.FC = () => {
           comment:    comment.trim() || undefined,
         },
       }).unwrap();
+      haptics.notifySuccess();
       navigation.goBack();
-    } catch { /* */ }
+    } catch {
+      haptics.notifyError();
+    }
     finally { setBusy(null); }
   };
 
