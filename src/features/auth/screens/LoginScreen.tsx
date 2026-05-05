@@ -97,7 +97,7 @@ const LoginLandingPremiumSpotlight: React.FC<{
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[loginLandingStyles.landingStack, { paddingTop: insets.top + 8 }]}>
+        <View style={[loginLandingStyles.landingStack, { paddingTop: insets.top + 52 }]}>
           <View style={[loginLandingStyles.glassCard, loginLandingStyles.glassCardCompact]}>
             <View style={loginLandingStyles.cardLogoRing}>
               <Image source={require('../../../assets/sanadkom_icon.png')} style={loginLandingStyles.cardLogoImg} resizeMode="contain" />
@@ -108,7 +108,7 @@ const LoginLandingPremiumSpotlight: React.FC<{
               {"Your secure, single-tap gateway to SCAD's enterprise services."}
             </Text>
             {msAuthEnabled && (
-              <View style={{ width: '100%', marginTop: 14 }}>
+              <View style={{ width: '100%', marginTop: 10 }}>
                 <TouchableOpacity
                   onPress={onMicrosoftSignIn}
                   disabled={busy}
@@ -181,59 +181,59 @@ const loginLandingStyles = StyleSheet.create({
   glassCard: {
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.96)',
-    borderRadius: 24, padding: 26,
+    borderRadius: 22, padding: 18,
     alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 22 },
-    shadowOpacity: 0.45, shadowRadius: 36, elevation: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.40, shadowRadius: 28, elevation: 14,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)',
   },
-  glassCardCompact: { padding: 22, paddingBottom: 24 },
+  glassCardCompact: { padding: 16, paddingBottom: 18 },
   cardLogoRing: {
-    width: 96, height: 96, borderRadius: 48,
+    width: 76, height: 76, borderRadius: 38,
     backgroundColor: '#F4F8FC',
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16, marginTop: -56,
-    borderWidth: 4, borderColor: '#FFFFFF',
-    shadowColor: BRAND_NAVY, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25, shadowRadius: 12, elevation: 8,
+    marginBottom: 10, marginTop: -42,
+    borderWidth: 3, borderColor: '#FFFFFF',
+    shadowColor: BRAND_NAVY, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22, shadowRadius: 10, elevation: 7,
   },
-  cardLogoImg: { width: 60, height: 60 },
-  cardEyebrow: { fontSize: 11, fontWeight: '800', color: BRAND_NAVY, letterSpacing: 1.4, marginBottom: 8 },
-  cardTitle: { fontSize: 24, fontWeight: '800', color: TEXT_PRIMARY, textAlign: 'center' },
-  cardSub: { fontSize: 13, color: TEXT_SECONDARY, textAlign: 'center', marginTop: 8, lineHeight: 19 },
-  cardHint: { fontSize: 11, color: TEXT_MUTED, textAlign: 'center', marginTop: 8 },
+  cardLogoImg: { width: 46, height: 46 },
+  cardEyebrow: { fontSize: 10, fontWeight: '800', color: BRAND_NAVY, letterSpacing: 1.3, marginBottom: 4 },
+  cardTitle: { fontSize: 20, fontWeight: '800', color: TEXT_PRIMARY, textAlign: 'center' },
+  cardSub: { fontSize: 12, color: TEXT_SECONDARY, textAlign: 'center', marginTop: 4, lineHeight: 17 },
+  cardHint: { fontSize: 11, color: TEXT_MUTED, textAlign: 'center', marginTop: 6 },
   msBtn: {
-    height: 54, borderRadius: 12,
+    height: 46, borderRadius: 11,
     backgroundColor: '#FFFFFF',
     borderWidth: 1, borderColor: '#8C8C8C',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 12, paddingHorizontal: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    gap: 10, paddingHorizontal: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
-  msLogo: { width: 22, height: 22, flexDirection: 'row', flexWrap: 'wrap' },
-  msTile: { width: 10, height: 10, margin: 0.5 },
-  msBtnText: { fontSize: 16, fontWeight: '700', color: '#5E5E5E', letterSpacing: 0.2 },
+  msLogo: { width: 20, height: 20, flexDirection: 'row', flexWrap: 'wrap' },
+  msTile: { width: 9, height: 9, margin: 0.5 },
+  msBtnText: { fontSize: 15, fontWeight: '700', color: '#5E5E5E', letterSpacing: 0.2 },
   spotlightCard: {
-    width: '100%', marginTop: 18,
+    width: '100%', marginTop: 12,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 14,
+    borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
   },
   spotlightTopRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
   },
   spotIcon: {
-    width: 38, height: 38, borderRadius: 12,
+    width: 34, height: 34, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1,
   },
-  spotIconTxt: { fontSize: 18 },
-  spotTitle: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
-  spotBody: { color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 3, lineHeight: 16 },
+  spotIconTxt: { fontSize: 16 },
+  spotTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+  spotBody: { color: 'rgba(255,255,255,0.72)', fontSize: 11, marginTop: 2, lineHeight: 15 },
   dotRow: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
-    gap: 6, marginTop: 12,
+    gap: 5, marginTop: 8,
   },
   dotH: {
     width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.25)',
@@ -241,7 +241,7 @@ const loginLandingStyles = StyleSheet.create({
   dotHActive: {
     width: 18, backgroundColor: '#FFFFFF',
   },
-  belowSlot: { marginTop: 22 },
+  belowSlot: { marginTop: 14 },
 });
 
 const announcementStyles = StyleSheet.create({

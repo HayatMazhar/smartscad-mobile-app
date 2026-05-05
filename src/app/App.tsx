@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Provider } from 'react-redux';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from '../store/store';
 import { ThemeProvider } from './theme/ThemeContext';
 import RootNavigator from './navigation/RootNavigator';
@@ -57,16 +58,18 @@ const App: React.FC = () => {
 
   return (
     <Provider store={store}>
-      <ThemeProvider>
-        <ClientErrorBoundary>
-          <View style={{ flex: 1 }}>
-            <RootNavigator />
-            {!splashGone && (
-              <WelcomeSplash onDone={() => setSplashAnimDone(true)} />
-            )}
-          </View>
-        </ClientErrorBoundary>
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <ClientErrorBoundary>
+            <View style={{ flex: 1 }}>
+              <RootNavigator />
+              {!splashGone && (
+                <WelcomeSplash onDone={() => setSplashAnimDone(true)} />
+              )}
+            </View>
+          </ClientErrorBoundary>
+        </ThemeProvider>
+      </SafeAreaProvider>
     </Provider>
   );
 };

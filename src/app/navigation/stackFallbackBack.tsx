@@ -1,5 +1,4 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { HeaderBackButton } from '@react-navigation/elements';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
@@ -28,9 +27,9 @@ export function fallbackStackHeaderLeft(
         return (
           <HeaderBackButton
             tintColor={tintColor}
-            label={label}
+            label={undefined}
             onPress={() => navigation.goBack()}
-            displayMode={Platform.OS === 'ios' ? 'default' : 'minimal'}
+            displayMode="minimal"
           />
         );
       }

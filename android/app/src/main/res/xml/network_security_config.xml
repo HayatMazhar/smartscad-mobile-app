@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UAT-only SSL bypass for hostname mismatch on uatmobileapi.adsmartsupport.ae.
+  The server presents a *.scad.gov.ae cert — wrong domain for this host.
+  REMOVE this file (or restrict base-config) before production release.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">uatmobileapi.adsmartsupport.ae</domain>
+        <domain includeSubdomains="true">www.adsmartsupport.ae</domain>
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </domain-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -8,6 +8,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useLoadRights } from '../../shared/rights';
 import { store, useAppSelector } from '../../store/store';
 import ThemedIcon from '../../shared/components/ThemedIcon';
+import ModernHeader from '../../shared/components/ModernHeader';
 import type { SemanticIconName } from '../theme/semanticIcons';
 import {
   loadAccountsExpenditureScreen,
@@ -140,11 +141,8 @@ const TabIcon: React.FC<{ name: SemanticIconName; focused: boolean; color: strin
   );
 };
 
-const defaultScreenOptions = (colors: any) => ({
-  headerStyle: { backgroundColor: colors.surface },
-  headerTintColor: colors.secondary,
-  headerTitleStyle: { fontWeight: '700' as const, fontSize: 18 },
-  headerShadowVisible: false,
+const defaultScreenOptions = (_colors: any) => ({
+  header: (props: React.ComponentProps<typeof ModernHeader>) => <ModernHeader {...props} />,
 });
 
 const HomeStackNavigator = () => {
