@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, AppState, AppStateStatus, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, AppState, AppStateStatus, Image, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppSelector } from '../../../../store/store';
@@ -276,6 +277,9 @@ const HomeExecutiveCockpit: React.FC<Props> = ({ m }) => {
   // ── Empty state when no approvals AND no KPIs ─────────────────────────
   const isFullyEmpty = approvals.total === 0 && kpis.length === 0 && teamPulse.onLeaveToday === 0;
 
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -295,7 +299,7 @@ const HomeExecutiveCockpit: React.FC<Props> = ({ m }) => {
         colors={heroGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.hero}
+        style={[styles.hero, isIOS ? { paddingTop: insets.top + 12 } : null]}
       >
         <View style={styles.heroContent}>
           <View style={styles.heroTopRow}>

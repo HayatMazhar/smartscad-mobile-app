@@ -13,20 +13,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": false,
-          "NSExceptionDomains": {
-            "uatmobileapi.adsmartsupport.ae": {
-              "NSExceptionAllowsInsecureHTTPLoads": true,
-              "NSExceptionMinimumTLSVersion": "TLSv1.0",
-              "NSThirdPartyExceptionRequiresForwardSecrecy": false,
-              "NSIncludesSubdomains": true
-            },
-            "www.adsmartsupport.ae": {
-              "NSExceptionAllowsInsecureHTTPLoads": true,
-              "NSThirdPartyExceptionRequiresForwardSecrecy": false,
-              "NSIncludesSubdomains": true
-            }
-          }
+          "NSAllowsArbitraryLoads": true
         },
         "ITSAppUsesNonExemptEncryption": false
       }

@@ -3,7 +3,8 @@
  * waiting for action; most-used services; leave + Star + latest news + Saahem (Design toggles).
  */
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import ProfileAvatar from '../../../../shared/components/ProfileAvatar';
 import { resolveWaitingItemRoute } from '../../utils/taskRouting';
@@ -50,6 +51,9 @@ const HomeGovSoftLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
     dateStr, timeStr, inTime, outTime, attStatus, greeting,
   } = m;
 
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+
   const heroPad = homeHeroSize === 'large' ? 18 : homeHeroSize === 'medium' ? 15 : 12;
   const heroRadius = homeHeroSize === 'large' ? 20 : homeHeroSize === 'medium' ? 18 : 14;
   const nameSize = (homeHeroSize === 'large' ? 25 : homeHeroSize === 'medium' ? 21 : 18) * fontScale;
@@ -66,7 +70,14 @@ const HomeGovSoftLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }} refreshControl={<ThemedRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <View style={{ padding: 16, paddingTop: homeHeroSize === 'compact' ? 10 : 18 }}>
+        <View
+          style={{
+            padding: 16,
+            paddingTop: isIOS
+              ? insets.top + (homeHeroSize === 'compact' ? 6 : 10)
+              : homeHeroSize === 'compact' ? 10 : 18,
+          }}
+        >
           <View
             style={[
               {

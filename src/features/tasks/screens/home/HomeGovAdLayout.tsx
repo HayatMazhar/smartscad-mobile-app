@@ -2,7 +2,8 @@
  * Government — Abu Dhabi: blue executive band, KPI strip, left-accent cards, wide layout.
  */
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, useWindowDimensions, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import ProfileAvatar from '../../../../shared/components/ProfileAvatar';
 import { resolveWaitingItemRoute } from '../../utils/taskRouting';
@@ -23,6 +24,8 @@ const HomeGovAdLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
   } = m;
   const { width: W } = useWindowDimensions();
   const kpiW = (W - 16 * 2 - 12) / 4;
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
@@ -30,7 +33,13 @@ const HomeGovAdLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
         contentContainerStyle={{ paddingBottom: 32 }}
         refreshControl={<ThemedRefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
       >
-        <View style={[styles.band, { backgroundColor: colors.primary }]}>
+        <View
+          style={[
+            styles.band,
+            { backgroundColor: colors.primary },
+            isIOS ? { paddingTop: insets.top + 12 } : null,
+          ]}
+        >
           <View style={styles.bandRow}>
             <View style={{ flex: 1 }}>
               {greeting.kind === 'text' || greeting.kind === 'icon' ? (

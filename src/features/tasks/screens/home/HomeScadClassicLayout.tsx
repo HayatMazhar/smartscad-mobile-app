@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import ProfileAvatar from '../../../../shared/components/ProfileAvatar';
 import { resolveWaitingItemRoute } from '../../utils/taskRouting';
@@ -91,6 +92,10 @@ const HomeScadClassicLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
     secTitleStyle,
   } = m;
 
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+  const heroPaddingTopOverride = isIOS ? { paddingTop: insets.top + 8 } : null;
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.homeStatusBar} backgroundColor={colors.homeHeroBackground} />
@@ -98,7 +103,7 @@ const HomeScadClassicLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
         refreshControl={<ThemedRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* ── Hero ───────────────────────────────────── */}
-        <View style={[styles.hero, heroL.hero, { backgroundColor: colors.homeHeroBackground }]}>
+        <View style={[styles.hero, heroL.hero, { backgroundColor: colors.homeHeroBackground }, heroPaddingTopOverride]}>
           <View style={[heroL.accent1, { backgroundColor: colors.homeDecor1 }]} />
           <View style={[heroL.accent2, { backgroundColor: colors.homeDecor2 }]} />
           <View style={[styles.heroTop, heroL.heroTop]}>

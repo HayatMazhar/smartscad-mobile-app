@@ -2,7 +2,8 @@
  * Government — minimal: eServices-style list home (no hero accents, list shortcuts, stat row, flat portal list).
  */
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import ProfileAvatar from '../../../../shared/components/ProfileAvatar';
 import { resolveWaitingItemRoute } from '../../utils/taskRouting';
@@ -25,6 +26,9 @@ const HomeGovMinimalLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
 
   const label = (s: string) => <Text style={[styles.h2, { color: colors.text, fontFamily }]}>{s}</Text>;
 
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.homeStatusBar} backgroundColor={colors.surface} />
@@ -33,7 +37,13 @@ const HomeGovMinimalLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
         contentContainerStyle={{ paddingBottom: 36 }}
         refreshControl={<ThemedRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <View style={[styles.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}>
+        <View
+          style={[
+            styles.topBar,
+            { backgroundColor: colors.surface, borderBottomColor: colors.divider },
+            isIOS ? { paddingTop: insets.top + 8 } : null,
+          ]}
+        >
           <View style={styles.topRow}>
             <View style={{ flex: 1, minWidth: 0 }}>
               {greeting.kind === 'text' ? (
