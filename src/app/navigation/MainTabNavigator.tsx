@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { EventArg } from '@react-navigation/native';
@@ -9,6 +10,7 @@ import { useLoadRights } from '../../shared/rights';
 import { store, useAppSelector } from '../../store/store';
 import ThemedIcon from '../../shared/components/ThemedIcon';
 import ModernHeader from '../../shared/components/ModernHeader';
+import TabBarBackground from '../../shared/components/TabBarBackground';
 import type { SemanticIconName } from '../theme/semanticIcons';
 import {
   loadAccountsExpenditureScreen,
@@ -480,6 +482,27 @@ const MainTabNavigator: React.FC = () => {
 
   useLoadRights();
 
+  // Dynamic tab bar metrics so the home indicator gap on iPhone X+ devices
+  // is honoured exactly (no hardcoded 26pt). Android is unchanged.
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+  const baseBarHeight = isIOS ? 50 : 64;
+  const tabBarHeight = baseBarHeight + (isIOS ? insets.bottom : 0);
+  const tabBarPaddingBottom = isIOS ? Math.max(insets.bottom, 6) : 10;
+
+  // iOS gets a translucent blur background; Android keeps its solid surface.
+  const tabBarStyleDynamic = isIOS
+    ? [
+        styles.tabBar,
+        {
+          height: tabBarHeight,
+          paddingBottom: tabBarPaddingBottom,
+          backgroundColor: 'transparent',
+          borderTopColor: 'transparent',
+        },
+      ]
+    : [styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.divider }];
+
   return (
     <Tab.Navigator
       initialRouteName={isExecutive ? 'Approvals' : 'Home'}
@@ -492,7 +515,8 @@ const MainTabNavigator: React.FC = () => {
           styles.tabLabel,
           { fontSize: 11 * fontScale, lineHeight: 14 * fontScale, fontFamily },
         ]),
-        tabBarStyle: [styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.divider }],
+        tabBarStyle: tabBarStyleDynamic,
+        ...(isIOS ? { tabBarBackground: () => <TabBarBackground /> } : {}),
       }}
     >
       <Tab.Screen
@@ -571,9 +595,9 @@ const MainTabNavigator: React.FC = () => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: Platform.OS === 'ios' ? 92 : 74,
+    // Height + paddingBottom are set dynamically per-platform in
+    // MainTabNavigator (iOS reads safe-area inset for the home indicator).
     paddingTop: 6,
-    paddingBottom: Platform.OS === 'ios' ? 26 : 10,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   tabLabel: {
