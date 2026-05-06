@@ -1,5 +1,4 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { HeaderBackButton } from '@react-navigation/elements';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
@@ -15,23 +14,19 @@ type HeaderLeftProps = {
 };
 
 /**
- * Merge into stack `screenOptions`. Used to render a deep-link-friendly back
- * button: if a non-root screen has no `canGoBack` (deep linked into mid-stack),
- * we still show a back affordance that navigates to the stack root.
+ * Merge into stack `screenOptions`: back uses `goBack()` when there is a
+ * previous screen; otherwise (e.g. deep link with a single stack route) shows
+ * the same control and navigates to `stackRootRouteName`.
  *
- * iOS callers should NOT spread the result of this function — UIKit's native
- * back chevron + interactive swipe gesture provide the correct iOS feel and
- * any custom `headerLeft` overrides them. We intentionally keep this opt-in
- * for the JS header path used on Android (where `ModernHeader` replaces the
- * native header entirely and reads `back` directly anyway).
+ * Note: stacks in this app render their headers via `ModernHeader`, which
+ * reads the `back` prop directly to decide whether to show the chevron, so
+ * `headerLeft` is effectively ignored. We still provide it here so any
+ * future screen that uses the native header gets a sensible deep-link
+ * fallback.
  */
 export function fallbackStackHeaderLeft(
   stackRootRouteName: string,
-): (args: StackOptsArgs) => Partial<NativeStackNavigationOptions> {
-  // iOS — return empty options so the system chevron is preserved everywhere.
-  if (Platform.OS === 'ios') {
-    return () => ({});
-  }
+): (args: StackOptsArgs) => Pick<NativeStackNavigationOptions, 'headerLeft'> {
   return ({ navigation, route }) => ({
     headerLeft: ({ tintColor, canGoBack }: HeaderLeftProps) => {
       if (canGoBack) {

@@ -145,50 +145,23 @@ const TabIcon: React.FC<{ name: SemanticIconName; focused: boolean; color: strin
 };
 
 /**
- * Platform-tuned stack screen defaults:
- *   iOS    → Apple-native large titles (collapse to compact on scroll), opaque
- *            surface header, brand-tinted chevron, "minimal" back display
- *            (chevron only — no parent screen label). Matches modern iOS HIG.
- *   Android → custom `ModernHeader` (compact, theme-aware, chevron-only back).
+ * Stack screen defaults — same compact `ModernHeader` on both platforms.
  *
- * Individual screens can still override `headerLargeTitle`, `headerTitle`,
- * `header` etc. on a per-route basis. Examples already in use:
- *   - `headerShown: false` (HomeScreen root, WinnerDetail)
- *   - `headerLargeTitle: false` for screens that should keep a compact bar.
+ * We tried native iOS large titles previously but the content-rich screens
+ * in this app (with their own section headings, hero cards, KPI grids etc.)
+ * looked overstuffed once iOS added another 80–120pt of large-title chrome.
+ * Compact unified header is more in keeping with the design language.
  *
- * NOTE on translucency: we deliberately keep the iOS header opaque here
- * because `headerTransparent + headerBlurEffect` would push content under
- * the header and require every ScrollView/FlatList to set
- * `contentInsetAdjustmentBehavior="automatic"`. We can opt-in to the
- * translucent blur per-screen later if desired.
+ * iOS still gets:
+ *   - the brand-tinted blurred tab bar (TabBarBackground)
+ *   - safe-area inset handling on home/tab bar
+ *   - haptic feedback
+ *   - restored ATS arbitrary loads for UAT cert
+ * those came from earlier commits and are unaffected by this header choice.
  */
-const defaultScreenOptions = (colors: any) => {
-  if (Platform.OS === 'ios') {
-    return {
-      headerLargeTitle: true,
-      headerLargeTitleShadowVisible: false,
-      headerShadowVisible: false,
-      headerTintColor: colors.primary,
-      headerStyle: { backgroundColor: colors.surface },
-      headerLargeStyle: { backgroundColor: colors.background },
-      headerLargeTitleStyle: {
-        fontSize: 32,
-        fontWeight: '800' as const,
-        color: colors.text,
-      },
-      headerTitleStyle: {
-        fontSize: 17,
-        fontWeight: '700' as const,
-        color: colors.text,
-      },
-      headerBackButtonDisplayMode: 'minimal' as const,
-      contentStyle: { backgroundColor: colors.background },
-    };
-  }
-  return {
-    header: (props: React.ComponentProps<typeof ModernHeader>) => <ModernHeader {...props} />,
-  };
-};
+const defaultScreenOptions = (_colors: any) => ({
+  header: (props: React.ComponentProps<typeof ModernHeader>) => <ModernHeader {...props} />,
+});
 
 const HomeStackNavigator = () => {
   const { colors } = useTheme();
