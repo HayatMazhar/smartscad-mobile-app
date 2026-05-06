@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
 import { useGetVideoGalleriesQuery } from '../services/portalApi';
@@ -70,7 +71,7 @@ const GalleryScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
       >
         <View style={[styles.thumb, { backgroundColor: bg, height: THUMB_H }]}>
           {coverUrl ? (
-            <Image source={{ uri: coverUrl }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            <AuthedImage source={{ uri: coverUrl }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
           ) : null}
           {/* Soft gradient-ish dim that's heavier at the bottom — keeps the
               poster bright at the top while the play button gets enough

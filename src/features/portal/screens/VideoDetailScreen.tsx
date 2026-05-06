@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Image, Modal, StatusBar, Pressable } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Modal, StatusBar, Pressable } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
 import { useGetVideoDetailQuery } from '../services/portalApi';
@@ -202,7 +203,7 @@ const VideoDetailScreen = ({ route }: { route?: { params?: { videoId?: number } 
               android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
             >
               {coverUrl ? (
-                <Image
+                <AuthedImage
                   source={{ uri: coverUrl }}
                   style={StyleSheet.absoluteFillObject}
                   resizeMode="cover"

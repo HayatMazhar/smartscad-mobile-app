@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../app/theme/ThemeContext';
 import { profileImageUrl } from '../utils/profileImage';
+import AuthedImage from './AuthedImage';
 
 interface Props {
   userId?: string;
@@ -38,7 +39,7 @@ const ProfileAvatar: React.FC<Props> = ({
   return (
     <View style={[styles.wrap, { width: size, height: size, borderRadius, backgroundColor }]}>
       {showImage ? (
-        <Image
+        <AuthedImage
           source={{ uri: imgUrl }}
           style={[styles.img, { width: size, height: size, borderRadius }]}
           onError={() => setImgFailed(true)}

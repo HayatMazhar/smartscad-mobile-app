@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, AppState, AppStateStatus, Image, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, AppState, AppStateStatus, Platform } from 'react-native';
+import AuthedImage from '../../../../shared/components/AuthedImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1143,7 +1144,7 @@ const HomeExecutiveCockpit: React.FC<Props> = ({ m }) => {
                   >
                     <View style={{ height: 140, backgroundColor: strip, position: 'relative' }}>
                       {coverUrl ? (
-                        <Image
+                        <AuthedImage
                           source={{ uri: coverUrl }}
                           style={StyleSheet.absoluteFillObject}
                           resizeMode="cover"

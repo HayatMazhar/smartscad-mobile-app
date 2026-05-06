@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Platform, Image, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Platform, useWindowDimensions } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
 import { useGetOffersQuery } from '../services/portalApi';
@@ -51,7 +52,7 @@ const OfferDetailScreen = ({ route }: { route?: { params?: { offerId?: number } 
     <ScrollView style={[{ flex: 1, backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 32 }}
       refreshControl={<ThemedRefreshControl isFetching={isFetching} isLoading={isLoading} onRefresh={refetch} />}>
       {coverUri && !coverFailed ? (
-        <Image
+        <AuthedImage
           source={{ uri: coverUri }}
           style={styles.heroImage}
           resizeMode="cover"

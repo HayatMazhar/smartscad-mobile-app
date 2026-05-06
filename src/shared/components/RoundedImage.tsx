@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, ImageStyle, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ImageStyle, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import AuthedImage from './AuthedImage';
 
 interface RoundedImageProps {
   source: { uri?: string } | number;
@@ -35,7 +36,7 @@ const RoundedImage: React.FC<RoundedImageProps> = ({
         style,
       ]}
     >
-      <Image
+      <AuthedImage
         source={source}
         style={[
           { width, height, borderRadius },

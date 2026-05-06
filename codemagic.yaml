@@ -15,7 +15,6 @@ workflows:
         - ios_signing
       vars:
         EXPO_PUBLIC_API_BASE_URL: "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
-        EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
         BUNDLE_ID: "ae.adsmartsupport.smartscadmobile"
 
     scripts:
@@ -176,7 +175,6 @@ workflows:
         - ios_signing
       vars:
         EXPO_PUBLIC_API_BASE_URL: "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
-        EXPO_PUBLIC_PROFILE_IMAGE_BASE: "https://www.adsmartsupport.ae"
         BUNDLE_ID: "ae.adsmartsupport.smartscadmobile"
 
     scripts:

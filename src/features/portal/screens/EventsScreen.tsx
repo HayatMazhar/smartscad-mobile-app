@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, useWindowDimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useNavigation } from '@react-navigation/native';
 import type { MoreTabNavigation } from '../../../app/navigation/mainNavigationTypes';
@@ -117,7 +118,7 @@ const EventsScreen: React.FC = () => {
           activeOpacity={0.75}
         >
           {coverUri ? (
-            <Image
+            <AuthedImage
               source={{ uri: coverUri }}
               style={[styles.thumb, { width: imgW, backgroundColor: colors.divider }]}
               resizeMode="cover"

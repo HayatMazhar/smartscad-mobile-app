@@ -1,5 +1,6 @@
-﻿import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Platform, KeyboardAvoidingView, Image, FlatList, useWindowDimensions, Modal, Pressable } from 'react-native';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Platform, KeyboardAvoidingView, FlatList, useWindowDimensions, Modal, Pressable } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedActivityIndicator from '../../../shared/components/ThemedActivityIndicator';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
@@ -299,7 +300,7 @@ const NewsDetailScreen = ({ route }: { route?: { params?: { newsId?: number } } 
                 />
               ) : coverImageUrl ? (
                 <Pressable onPress={() => openLightbox(0)} style={styles.softMedia}>
-                  <Image source={{ uri: coverImageUrl }} style={styles.softMedia} resizeMode="cover" />
+                  <AuthedImage source={{ uri: coverImageUrl }} style={styles.softMedia} resizeMode="cover" />
                 </Pressable>
               ) : (
                 <View style={[styles.softMediaFallback, { backgroundColor: colors.cardTint ?? colors.background }]}>
@@ -560,7 +561,7 @@ const NewsCarousel: React.FC<NewsCarouselProps> = ({
         getItemLayout={(_, i) => ({ length: safeWidth, offset: safeWidth * i, index: i })}
         renderItem={({ item, index: i }) => (
           <Pressable onPress={() => onSlidePress(i)} style={{ width: safeWidth, height }}>
-            <Image source={{ uri: item }} style={{ width: safeWidth, height }} resizeMode="cover" />
+            <AuthedImage source={{ uri: item }} style={{ width: safeWidth, height }} resizeMode="cover" />
           </Pressable>
         )}
       />
@@ -686,7 +687,7 @@ const NewsLightbox: React.FC<NewsLightboxProps> = ({ uris, index, onClose, onInd
           style={{ width: safeWidth, height: stripH, zIndex: 1 }}
           renderItem={({ item }) => (
             <View style={{ width: safeWidth, height: stripH, alignItems: 'center', justifyContent: 'center' }}>
-              <Image
+              <AuthedImage
                 source={{ uri: item }}
                 style={{ width: safeWidth, height: stripH }}
                 resizeMode="contain"

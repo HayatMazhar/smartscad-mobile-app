@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, Image, useWindowDimensions, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform, useWindowDimensions, Alert } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useNavigation } from '@react-navigation/native';
 import type { MoreTabNavigation } from '../../../app/navigation/mainNavigationTypes';
@@ -81,7 +82,7 @@ const EventDetailScreen = ({ route }: { route?: { params?: { eventId?: number | 
     <ScrollView style={[{ flex: 1, backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 32 }}
       refreshControl={<ThemedRefreshControl isFetching={isFetching} isLoading={isLoading} onRefresh={refetch} />}>
       {coverUri ? (
-        <Image
+        <AuthedImage
           source={{ uri: coverUri }}
           style={styles.heroImage}
           resizeMode="cover"

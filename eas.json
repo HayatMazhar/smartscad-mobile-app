@@ -15,8 +15,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1",
-        "EXPO_PUBLIC_PROFILE_IMAGE_BASE": "https://www.adsmartsupport.ae"
+        "EXPO_PUBLIC_API_BASE_URL": "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
       }
     },
     "uat": {
@@ -30,8 +29,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1",
-        "EXPO_PUBLIC_PROFILE_IMAGE_BASE": "https://www.adsmartsupport.ae"
+        "EXPO_PUBLIC_API_BASE_URL": "https://uatmobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
       }
     },
     "production": {
@@ -45,8 +43,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1",
-        "EXPO_PUBLIC_PROFILE_IMAGE_BASE": "https://www.adsmartsupport.ae"
+        "EXPO_PUBLIC_API_BASE_URL": "https://mobileapi.adsmartsupport.ae/SmartSCADMobileAPI/api/v1"
       }
     }
   },

@@ -59,7 +59,19 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
       ? options.title
       : route.name);
 
-  const canShowBack = !hideBack && !!back;
+  // `back` is provided by `@react-navigation/native-stack` only when the
+  // current screen has a previous sibling in the SAME stack. That's not the
+  // case when we land here via cross-tab nested navigation
+  // (`navigation.navigate('More', { screen: 'NewsDetail' })` resets the
+  // target stack so NewsDetail is the only route). We still want a back
+  // chevron in that scenario, so we additionally consult
+  // `navigation.canGoBack()` which walks up to the parent (tab) navigator
+  // and reports `true` when the user came from another tab. Tapping it
+  // falls back to `goBack()` which correctly returns the user to the
+  // origin tab / screen.
+  const canGoBack =
+    typeof navigation.canGoBack === 'function' ? navigation.canGoBack() : false;
+  const canShowBack = !hideBack && (!!back || canGoBack);
 
   if (isIOS) {
     return (

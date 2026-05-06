@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native';
+import AuthedImage from '../../../../shared/components/AuthedImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import ProfileAvatar from '../../../../shared/components/ProfileAvatar';
@@ -579,7 +580,7 @@ const HomeScadClassicLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
                     onPress={() => navigation.navigate('More', { screen: 'NewsDetail', params: { newsId: n.id } })} activeOpacity={0.8}>
                     {cover ? (
                       <>
-                        <Image
+                        <AuthedImage
                           source={{ uri: cover }}
                           style={StyleSheet.absoluteFillObject}
                           resizeMode="cover"

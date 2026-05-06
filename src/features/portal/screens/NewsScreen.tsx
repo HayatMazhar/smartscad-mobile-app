@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
 import { useGetNewsQuery } from '../services/portalApi';
@@ -99,7 +100,7 @@ const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       >
         <View style={[styles.imagePlaceholder, { backgroundColor: catColor }]}>
           {coverUrl ? (
-            <Image
+            <AuthedImage
               source={{ uri: coverUrl }}
               style={StyleSheet.absoluteFillObject}
               resizeMode="cover"

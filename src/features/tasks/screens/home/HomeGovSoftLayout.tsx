@@ -3,7 +3,8 @@
  * waiting for action; most-used services; leave + Star + latest news + Saahem (Design toggles).
  */
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native';
+import AuthedImage from '../../../../shared/components/AuthedImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedRefreshControl from '../../../../shared/components/ThemedRefreshControl';
 import ProfileAvatar from '../../../../shared/components/ProfileAvatar';
@@ -521,7 +522,7 @@ const HomeGovSoftLayout: React.FC<{ m: HomeScreenModel }> = ({ m }) => {
                 >
                   <View style={{ height: bannerH, backgroundColor: strip, position: 'relative' }}>
                     {coverUrl ? (
-                      <Image
+                      <AuthedImage
                         source={{ uri: coverUrl }}
                         style={StyleSheet.absoluteFillObject}
                         resizeMode="cover"
