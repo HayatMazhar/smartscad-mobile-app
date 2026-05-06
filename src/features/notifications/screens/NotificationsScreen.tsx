@@ -1,5 +1,15 @@
-import React, { useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Platform,
+  I18nManager,
+} from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,6 +22,7 @@ import { asArray } from '../../../shared/utils/apiNormalize';
 import {
   resolveNotificationRoute, iconForNotif, moduleLabel, NotificationLike,
 } from '../utils/notifRouting';
+import haptics from '../../../shared/utils/haptics';
 
 const timeAgo = (dateStr?: string): string => {
   if (!dateStr) return '';
@@ -103,10 +114,34 @@ const NotificationsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   const renderItem = (item: NotificationLike) => {
+    const read = isItemRead(item);
+    if (read) {
+      // Already read — no swipe action available, render plain.
+      return <NotifCard item={item} onPress={() => handleTap(item)} />;
+    }
+    return (
+      <SwipeableNotifRow
+        item={item}
+        onPress={() => handleTap(item)}
+        onMarkRead={() => {
+          const key =
+            typeof item.notificationKey === 'string' && item.notificationKey.length > 0
+              ? item.notificationKey
+              : item.id != null && String(item.id).length > 0
+                ? String(item.id)
+                : '';
+          if (key) markAsRead(key).unwrap().catch(() => {});
+        }}
+      />
+    );
+  };
+
+  // Card body extracted so both swipeable and plain rows share styling.
+  type CardProps = { item: NotificationLike; onPress: () => void };
+  function NotifCard({ item, onPress }: CardProps) {
     const icon = iconForNotif(item);
     const read = isItemRead(item);
     const label = moduleLabel(item);
-
     return (
       <TouchableOpacity
         style={[
@@ -117,13 +152,12 @@ const NotificationsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             borderColor: read ? colors.borderLight ?? colors.border : colors.primary,
           },
         ]}
-        onPress={() => handleTap(item)}
+        onPress={onPress}
         activeOpacity={0.75}
       >
         <View style={[styles.iconCircle, { backgroundColor: read ? (colors.cardTint ?? colors.background) : colors.primaryLight ?? `${colors.primary}22` }]}>
           <Text style={styles.iconEmoji}>{icon}</Text>
         </View>
-
         <View style={styles.notifContent}>
           <View style={styles.rowTopLine}>
             <Text
@@ -137,11 +171,9 @@ const NotificationsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             </Text>
             {!read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
           </View>
-
           <Text style={[styles.notifBody, { color: colors.textSecondary }]} numberOfLines={2}>
             {item.body ?? item.message ?? ''}
           </Text>
-
           <View style={styles.metaRow}>
             <View style={[styles.modulePill, { backgroundColor: (colors.cardTint ?? colors.background), borderColor: colors.border }]}>
               <Text style={[styles.modulePillText, { color: colors.textSecondary }]}>{label}</Text>
@@ -154,7 +186,70 @@ const NotificationsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         </View>
       </TouchableOpacity>
     );
-  };
+  }
+
+  /**
+   * Unread row: swipe left-to-right (or right-to-left in RTL) reveals a green
+   * "Mark read" action. Releasing past the threshold fires the mutation
+   * immediately and snaps the row closed. Subtle haptic when the action
+   * appears so the user feels the threshold tick in.
+   */
+  function SwipeableNotifRow({
+    item,
+    onPress,
+    onMarkRead,
+  }: CardProps & { onMarkRead: () => void }) {
+    const swipeRef = useRef<Swipeable | null>(null);
+    const triggered = useRef(false);
+
+    const renderActions = (
+      _progress: Animated.AnimatedInterpolation<number>,
+      dragX: Animated.AnimatedInterpolation<number>,
+    ) => {
+      // dragX is negative when swiping right→left (right action) and positive
+      // when swiping left→right (left action). We use the absolute value to
+      // keep the icon centered as the action grows in width.
+      const opacity = dragX.interpolate({
+        inputRange: I18nManager.isRTL ? [-1, 0, 80] : [-80, 0, 1],
+        outputRange: I18nManager.isRTL ? [0, 0, 1] : [1, 0, 0],
+        extrapolate: 'clamp',
+      });
+      return (
+        <Animated.View
+          style={[styles.swipeAction, { backgroundColor: colors.success ?? '#16A34A', opacity }]}
+        >
+          <Text style={styles.swipeActionIcon}>✓</Text>
+          <Text style={styles.swipeActionLabel}>{t('notifications.markRead', 'Mark read')}</Text>
+        </Animated.View>
+      );
+    };
+
+    return (
+      <Swipeable
+        ref={swipeRef}
+        friction={1.6}
+        rightThreshold={48}
+        leftThreshold={48}
+        overshootRight={false}
+        overshootLeft={false}
+        renderRightActions={I18nManager.isRTL ? undefined : renderActions}
+        renderLeftActions={I18nManager.isRTL ? renderActions : undefined}
+        onSwipeableWillOpen={() => {
+          if (triggered.current) return;
+          triggered.current = true;
+          haptics.notifySuccess();
+          onMarkRead();
+          // Snap closed once the API call is in flight.
+          setTimeout(() => swipeRef.current?.close?.(), 180);
+        }}
+        onSwipeableClose={() => {
+          triggered.current = false;
+        }}
+      >
+        <NotifCard item={item} onPress={onPress} />
+      </Swipeable>
+    );
+  }
 
   const renderSectionHeader = (title: string) => (
     <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>{title}</Text>
@@ -335,6 +430,35 @@ const styles = StyleSheet.create({
   emptyIcon: { fontSize: 56, marginBottom: 12, opacity: 0.85 },
   emptyTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 6 },
   emptyBody: { fontSize: 13, textAlign: 'center', lineHeight: 19 },
+
+  /**
+   * Swipe action revealed underneath an unread notification card. We mirror
+   * the card's vertical inset so the action grows snugly inside the row
+   * gutter. Width is intrinsic — the gesture-handler grows it as the user
+   * swipes.
+   */
+  swipeAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    minWidth: 100,
+    marginVertical: 5,
+    marginHorizontal: 12,
+    borderRadius: 14,
+  },
+  swipeActionIcon: {
+    color: '#FFFFFF',
+    fontSize: Platform.OS === 'ios' ? 22 : 20,
+    fontWeight: '900',
+  },
+  swipeActionLabel: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
 });
 
 export default NotificationsScreen;

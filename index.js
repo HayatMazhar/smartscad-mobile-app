@@ -1,3 +1,8 @@
+// Required at the very top, BEFORE any React Native imports, so the
+// gesture handler native module is wired in early. Needed for Swipeable
+// (notifications swipe-to-mark-read), long-press gestures, and any other
+// gesture-handler use throughout the app.
+import 'react-native-gesture-handler';
 import { registerRootComponent } from 'expo';
 import App from './src/app/App';
 

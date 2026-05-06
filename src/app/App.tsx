@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from '../store/store';
@@ -10,6 +11,7 @@ import { tryRestoreSession, type RestoreOutcome } from '../features/auth/service
 import '../shared/i18n/i18n';
 import { ClientErrorBoundary } from '../shared/diagnostics/ClientErrorBoundary';
 import { setupClientErrorReporting } from '../shared/diagnostics/setupClientErrorReporting';
+import ContextMenuHost from '../shared/components/ContextMenu';
 
 /**
  * App boot sequence:
@@ -57,20 +59,26 @@ const App: React.FC = () => {
   const splashGone = splashAnimDone && restoreDone;
 
   return (
-    <Provider store={store}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <ClientErrorBoundary>
-            <View style={{ flex: 1 }}>
-              <RootNavigator />
-              {!splashGone && (
-                <WelcomeSplash onDone={() => setSplashAnimDone(true)} />
-              )}
-            </View>
-          </ClientErrorBoundary>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <ClientErrorBoundary>
+              <View style={{ flex: 1 }}>
+                <RootNavigator />
+                {!splashGone && (
+                  <WelcomeSplash onDone={() => setSplashAnimDone(true)} />
+                )}
+                {/* Cross-platform action sheet host. iOS uses native
+                    ActionSheetIOS directly so this stays inert there;
+                    Android renders a bottom-sheet modal. */}
+                <ContextMenuHost />
+              </View>
+            </ClientErrorBoundary>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </Provider>
+    </GestureHandlerRootView>
   );
 };
 

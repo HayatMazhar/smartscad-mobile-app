@@ -163,6 +163,29 @@ const defaultScreenOptions = (_colors: any) => ({
   header: (props: React.ComponentProps<typeof ModernHeader>) => <ModernHeader {...props} />,
 });
 
+/**
+ * Presentation overrides for "create / request" flows. On iOS these slide
+ * up as native modal sheets you can swipe-to-dismiss (matches the system
+ * pattern for "compose" affordances — Mail, Calendar, Reminders). On
+ * Android we keep the default push transition since Material doesn't have
+ * an equivalent system pattern and full-screen pushes feel right.
+ *
+ * Apply by spreading into the screen `options`:
+ *
+ *   <MoreStack.Screen ... options={{ title: 'Create Task', ...iosModalOptions }} />
+ */
+const iosModalOptions =
+  Platform.OS === 'ios'
+    ? ({
+        presentation: 'modal' as const,
+        // The custom ModernHeader still renders inside the modal so the
+        // user has a visible Cancel / back chevron + title. iOS's swipe-down
+        // dismiss continues to work because we're using the native-stack's
+        // own modal presentation (not a JS overlay).
+        gestureEnabled: true,
+      })
+    : ({});
+
 const HomeStackNavigator = () => {
   const { colors } = useTheme();
   return (
@@ -189,7 +212,11 @@ const TicketStackNavigator = () => {
       <TicketStack.Screen name="TicketList" getComponent={loadTicketListScreen} options={{ title: 'Sanadkom' }} />
       <TicketStack.Screen name="TicketDetail" getComponent={loadTicketDetailScreen} options={{ title: 'Request Detail' }} />
       <TicketStack.Screen name="ServiceCatalog" getComponent={loadServiceCatalogScreen} options={{ title: 'Service Catalog' }} />
-      <TicketStack.Screen name="SubmitTicket" getComponent={loadSubmitTicketScreen} options={{ title: 'Submit Request' }} />
+      <TicketStack.Screen
+        name="SubmitTicket"
+        getComponent={loadSubmitTicketScreen}
+        options={{ title: 'Submit Request', ...iosModalOptions }}
+      />
     </TicketStack.Navigator>
   );
 };
@@ -293,11 +320,19 @@ const MoreStackNavigator = () => {
       />
       <MoreStack.Screen name="TaskList" getComponent={loadTaskListScreen} options={{ title: 'My Tasks' }} />
       <MoreStack.Screen name="TaskDetail" getComponent={loadTaskDetailScreen} options={{ title: 'Task Detail' }} />
-      <MoreStack.Screen name="CreateTask" getComponent={loadCreateTaskScreen} options={{ title: 'Create Task' }} />
+      <MoreStack.Screen
+        name="CreateTask"
+        getComponent={loadCreateTaskScreen}
+        options={{ title: 'Create Task', ...iosModalOptions }}
+      />
       <MoreStack.Screen name="LeaveBalance" getComponent={loadLeaveBalanceScreen} options={{ title: 'Leave Balance' }} />
       <MoreStack.Screen name="LeaveHistory" getComponent={loadLeaveHistoryScreen} options={{ title: 'Leave History' }} />
       <MoreStack.Screen name="LeaveDetail" getComponent={loadLeaveDetailScreen} options={{ title: 'Leave Detail' }} />
-      <MoreStack.Screen name="LeaveRequest" getComponent={loadLeaveRequestScreen} options={{ title: 'Request Leave' }} />
+      <MoreStack.Screen
+        name="LeaveRequest"
+        getComponent={loadLeaveRequestScreen}
+        options={{ title: 'Request Leave', ...iosModalOptions }}
+      />
       <MoreStack.Screen name="Attendance" getComponent={loadAttendanceScreen} options={{ title: 'Attendance' }} />
       <MoreStack.Screen name="MonthlyCard" getComponent={loadMonthlyCardScreen} options={{ title: 'Monthly Card' }} />
       <MoreStack.Screen
@@ -305,7 +340,11 @@ const MoreStackNavigator = () => {
         getComponent={loadAttendanceTeamGridScreen}
         options={{ title: 'Team Attendance' }}
       />
-      <MoreStack.Screen name="IncidentReport" getComponent={loadIncidentReportScreen} options={{ title: 'Report Incident' }} />
+      <MoreStack.Screen
+        name="IncidentReport"
+        getComponent={loadIncidentReportScreen}
+        options={{ title: 'Report Incident', ...iosModalOptions }}
+      />
       <MoreStack.Screen name="FinanceDashboard" getComponent={loadFinanceDashboardScreen} options={{ title: 'Finance' }} />
       <MoreStack.Screen name="CashFlowList" getComponent={loadCashFlowListScreen} options={{ title: 'Cash Flows' }} />
       <MoreStack.Screen name="CashFlowDetail" getComponent={loadCashFlowDetailScreen} options={{ title: 'Cash Flow' }} />
@@ -322,7 +361,11 @@ const MoreStackNavigator = () => {
       <MoreStack.Screen name="ProjectList" getComponent={loadProjectListScreen} options={{ title: 'Projects' }} />
       <MoreStack.Screen name="ProjectDetail" getComponent={loadProjectDetailScreen} options={{ title: 'Project' }} />
       <MoreStack.Screen name="EpmTaskDetail" getComponent={loadEpmTaskDetailScreen} options={{ title: 'Task Detail' }} />
-      <MoreStack.Screen name="EpmTaskCreate" getComponent={loadEpmTaskCreateScreen} options={{ title: 'New Task' }} />
+      <MoreStack.Screen
+        name="EpmTaskCreate"
+        getComponent={loadEpmTaskCreateScreen}
+        options={{ title: 'New Task', ...iosModalOptions }}
+      />
       <MoreStack.Screen name="EpmTaskEdit" getComponent={loadEpmTaskEditScreen} options={{ title: 'Edit Task' }} />
       <MoreStack.Screen
         name="EpmTaskRequestChange"
@@ -342,10 +385,18 @@ const MoreStackNavigator = () => {
       <MoreStack.Screen
         name="EpmMilestoneCreate"
         getComponent={loadEpmMilestoneCreateScreen}
-        options={{ title: 'New Milestone' }}
+        options={{ title: 'New Milestone', ...iosModalOptions }}
       />
-      <MoreStack.Screen name="EpmRiskCreate" getComponent={loadEpmRiskCreateScreen} options={{ title: 'Add Risk' }} />
-      <MoreStack.Screen name="EpmIssueCreate" getComponent={loadEpmIssueCreateScreen} options={{ title: 'Log Issue' }} />
+      <MoreStack.Screen
+        name="EpmRiskCreate"
+        getComponent={loadEpmRiskCreateScreen}
+        options={{ title: 'Add Risk', ...iosModalOptions }}
+      />
+      <MoreStack.Screen
+        name="EpmIssueCreate"
+        getComponent={loadEpmIssueCreateScreen}
+        options={{ title: 'Log Issue', ...iosModalOptions }}
+      />
       <MoreStack.Screen
         name="PmsHub"
         getComponent={loadPmsHubScreen}

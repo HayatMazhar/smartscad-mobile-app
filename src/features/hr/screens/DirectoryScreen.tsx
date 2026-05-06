@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, TextInput, SectionList, TouchableOpacity, StyleSheet, StatusBar, I18nManager } from 'react-native';
+import { View, Text, TextInput, SectionList, TouchableOpacity, StyleSheet, StatusBar, I18nManager, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ThemedActivityIndicator from '../../../shared/components/ThemedActivityIndicator';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
@@ -11,6 +11,7 @@ import { SortSheet, sortRowsBy, SortOption } from '../../../shared/components/So
 import ProfileAvatar from '../../../shared/components/ProfileAvatar';
 import ScreenHeroBackButton from '../../../shared/components/ScreenHeroBackButton';
 import { accentChroma } from '../../../app/theme/accentChroma';
+import { showContextMenu } from '../../../shared/components/ContextMenu';
 
 /* ─── sort options ──────────────────────────────────────────────────── */
 type DirSort = 'nameAsc' | 'nameDesc' | 'department' | 'jobTitle';
@@ -134,6 +135,63 @@ const DirectoryScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     });
   }, [navigation, isArabic]);
 
+  /**
+   * Long-press on a directory row brings up an iOS native action sheet
+   * (Android: matching bottom sheet) with quick communication actions.
+   * Phone / email rows only render when the underlying field has a value
+   * — no point offering "Call" if the SP didn't return a number.
+   *
+   * Email opens the system mail composer; phone uses `tel:`. Both go through
+   * `Linking.openURL`. Failure (no mail client / restricted dialler) shows a
+   * gentle Alert.
+   */
+  const onLongPressEmployee = useCallback((emp: Employee) => {
+    const displayName = isArabic ? (emp.displayNameAr || emp.nameAr || emp.name) : emp.name;
+    const phone = String(emp.mobile ?? emp.phone ?? '').trim();
+    const email = String(emp.email ?? '').trim();
+    const items = [
+      {
+        label: t('directory.viewProfile', 'View profile'),
+        onPress: () => openEmployee(emp),
+      },
+    ] as Parameters<typeof showContextMenu>[0]['items'];
+    if (email) {
+      items.push({
+        label: t('directory.sendEmail', 'Send email'),
+        onPress: () => {
+          Linking.openURL(`mailto:${email}`).catch(() =>
+            Alert.alert(t('directory.cantOpenMail', 'Mail unavailable'), email),
+          );
+        },
+      });
+    }
+    if (phone) {
+      items.push({
+        label: t('directory.callPhone', 'Call {{phone}}', { phone }),
+        onPress: () => {
+          const cleaned = phone.replace(/[^+0-9]/g, '');
+          Linking.openURL(`tel:${cleaned}`).catch(() =>
+            Alert.alert(t('directory.cantOpenDialer', 'Dialler unavailable'), phone),
+          );
+        },
+      });
+    }
+    if (emp.extension) {
+      items.push({
+        label: t('directory.callExt', 'Dial extension {{ext}}', { ext: emp.extension }),
+        onPress: () => {
+          Linking.openURL(`tel:${emp.extension}`).catch(() => {});
+        },
+      });
+    }
+    showContextMenu({
+      title: displayName,
+      message: emp.jobTitle || emp.department,
+      items,
+      cancelLabel: t('common.cancel', 'Cancel'),
+    });
+  }, [openEmployee, isArabic, t]);
+
   const renderEmployee = useCallback(({ item }: { item: Employee }) => {
     const bg = hashColor(item.department || item.name);
     const nm = isArabic ? (item.displayNameAr || item.nameAr || item.name) : item.name;
@@ -143,6 +201,8 @@ const DirectoryScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         style={[styles.empCard, shadows.card, { backgroundColor: colors.card }]}
         activeOpacity={0.7}
         onPress={() => openEmployee(item)}
+        onLongPress={() => onLongPressEmployee(item)}
+        delayLongPress={350}
       >
         <ProfileAvatar
           userId={item.id}
@@ -173,7 +233,7 @@ const DirectoryScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         <Text style={[styles.chevron, { color: colors.textMuted }]}>›</Text>
       </TouchableOpacity>
     );
-  }, [colors, shadows, openEmployee, isArabic, hashColor]);
+  }, [colors, shadows, openEmployee, onLongPressEmployee, isArabic, hashColor]);
 
   const renderSectionHeader = useCallback(({ section }: { section: Section }) => (
     <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>

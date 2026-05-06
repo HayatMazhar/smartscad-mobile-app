@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Share } from 'react-native';
 import AuthedImage from '../../../shared/components/AuthedImage';
 import ThemedRefreshControl from '../../../shared/components/ThemedRefreshControl';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { useTheme } from '../../../app/theme/ThemeContext';
 import { accentChromaKey } from '../../../app/theme/accentChroma';
 import { asArray } from '../../../shared/utils/apiNormalize';
 import { SortSheet, SortTriggerButton, sortRowsBy, toDate, SortOption } from '../../../shared/components/SortSheet';
+import { showContextMenu } from '../../../shared/components/ContextMenu';
 
 /**
  * Web parity: legacy News.cshtml uses News_Photos.FirstOrDefault(IsActive == true)
@@ -87,6 +88,36 @@ const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
   }, [data, sortKey]);
 
+  /**
+   * Long-press on a news card opens an iOS native ActionSheet (Android: a
+   * matching bottom sheet). Lets the user open, share, or copy a snippet
+   * without committing to a navigation.
+   */
+  const onLongPressItem = (item: any) => {
+    const title = String(item.title ?? '').trim();
+    const summary = stripHtmlForCard(item.excerpt ?? item.description ?? item.body ?? item.content);
+    const shareBody = title && summary ? `${title}\n\n${summary}` : title || summary;
+    showContextMenu({
+      title: title || t('news.contextTitle', 'News article'),
+      items: [
+        {
+          label: t('news.openArticle', 'Open article'),
+          onPress: () => navigation.navigate('NewsDetail', { newsId: item.id }),
+        },
+        {
+          label: t('common.share', 'Share'),
+          onPress: () => {
+            Share.share({
+              title: title || 'Sanadkom — News',
+              message: shareBody,
+            }).catch(() => {});
+          },
+        },
+      ],
+      cancelLabel: t('common.cancel', 'Cancel'),
+    });
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     const category = item.category ?? 'General';
     const catColor = accentChromaKey(colors, skin, category);
@@ -96,6 +127,8 @@ const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       <TouchableOpacity
         style={[styles.card, shadows.card, { backgroundColor: colors.card }]}
         onPress={() => navigation.navigate('NewsDetail', { newsId: item.id })}
+        onLongPress={() => onLongPressItem(item)}
+        delayLongPress={350}
         activeOpacity={0.7}
       >
         <View style={[styles.imagePlaceholder, { backgroundColor: catColor }]}>
