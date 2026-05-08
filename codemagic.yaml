@@ -31,9 +31,9 @@ workflows:
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
 
-          # Install AdHoc profile (UUID 5f216e3b-9259-4789-b99b-80b12b352966)
+          # Install AdHoc profile (UUID 9ab95be6-68fb-4f9b-b4e2-67fb1701c521)
           if [ -z "$CM_PROVISIONING_PROFILE" ]; then echo "ERROR: CM_PROVISIONING_PROFILE env var is empty"; exit 1; fi
-          echo $CM_PROVISIONING_PROFILE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/5f216e3b-9259-4789-b99b-80b12b352966.mobileprovision
+          echo $CM_PROVISIONING_PROFILE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/9ab95be6-68fb-4f9b-b4e2-67fb1701c521.mobileprovision
 
           # Install AppStore profile (UUID a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7)
           if [ -z "$CM_PROVISIONING_PROFILE_APPSTORE" ]; then echo "ERROR: CM_PROVISIONING_PROFILE_APPSTORE env var is empty"; exit 1; fi
@@ -90,7 +90,7 @@ workflows:
             <key>provisioningProfiles</key>
             <dict>
               <key>ae.adsmartsupport.smartscadmobile</key>
-              <string>5f216e3b-9259-4789-b99b-80b12b352966</string>
+              <string>9ab95be6-68fb-4f9b-b4e2-67fb1701c521</string>
             </dict>
           </dict>
           </plist>
@@ -108,7 +108,7 @@ workflows:
           # name has a leading `*` and embedded `:` which Xcode's name lookup
           # rejects. UUIDs are unambiguous.
           #   AppStore UUID = a6b904f3-b8b3-4c8c-86f3-c9b6fe07a2f7  (used for archive)
-          #   AdHoc    UUID = 5f216e3b-9259-4789-b99b-80b12b352966  (used for export)
+          #   AdHoc    UUID = 9ab95be6-68fb-4f9b-b4e2-67fb1701c521  (used for export)
           xcodebuild \
             -workspace ios/Sanadkom.xcworkspace \
             -scheme Sanadkom \
